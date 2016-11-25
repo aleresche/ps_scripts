@@ -1,6 +1,6 @@
 $Runspace = [runspacefactory]::CreateRunspace()
 
-$PowerShell = ::Create()
+$PowerShell = ::Create(void)
 
 $PowerShell.runspace = $Runspace
 

@@ -27,6 +27,30 @@ else {
     $UserCredential  = Get-Credential
 }
 #>
+<#
+.FUNCTION CODE
+#>
+function Connect-Exch{
+    $inputCred = Join-Path $PWD.ToString()"\..\Cred.xml"  
+    if(![System.IO.File]::Exists($inputCred)){
+        # Connection to tenant - use this only 1st time to collect credentials
+        Get-Credential | Export-Clixml $inputCred
+    } 
+    #Write-Host "Credentials file located for user $msolAccount on tenant $msolTenantName ! Loading from cache..."
+    # Set this variable to the location of the file where credentials are cached
+    $UsrCredential = Import-Clixml $inputCred
+    #Connecting to Azure AD & Exchange Online
+    $objLabelConnect.Text = "Connecting.."
+    #connect-msolservice -credential $UserCredential
+    $Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UserCredential -Authentication Basic -AllowRedirection
+    Import-PSSession $Session -AllowClobber |  out-null
+    $objLabelConnect.Text = "Connected"
+    $objviewOutput.items.add($(Get-PSSession | where {$_.Name -eq "ExchangeOnline"}))
+}
+<#
+.INIT FROM
+#>
+
 [void] [System.Reflection.Assembly]::LoadWithPartialName("System.Drawing") 
 [void] [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms")
 
@@ -44,33 +68,33 @@ $objO365Status.Text = "O365 PS connection Status"
 $objform.Controls.Add($objO365Status)
 
 #O365 Connection Status labelExch
-$objLabelVMname = New-Object System.Windows.Forms.Label
-$objLabelVMname.Location = New-Object System.Drawing.Size(15,20) 
-$objLabelVMname.Size = New-Object System.Drawing.Size(200,20) 
-$objLabelVMname.Text = "Connection to Exchange : "
-$objO365Status.Controls.Add($objLabelVMname) 
+$objLabelXchConnect = New-Object System.Windows.Forms.Label
+$objLabelXchConnect.Location = New-Object System.Drawing.Size(15,20) 
+$objLabelXchConnect.Size = New-Object System.Drawing.Size(200,20) 
+$objLabelXchConnect.Text = "Connection to Exchange : "
+$objO365Status.Controls.Add($objLabelXchConnect) 
 
 #O365 Connection Status labelCred
-$objLabelVMname = New-Object System.Windows.Forms.Label
-$objLabelVMname.Location = New-Object System.Drawing.Size(15,60) 
-$objLabelVMname.Size = New-Object System.Drawing.Size(200,20) 
-$objLabelVMname.Text = "Current Credential          : "
-$objO365Status.Controls.Add($objLabelVMname) 
+$objLabelCredential = New-Object System.Windows.Forms.Label
+$objLabelCredential.Location = New-Object System.Drawing.Size(15,60) 
+$objLabelCredential.Size = New-Object System.Drawing.Size(200,20) 
+$objLabelCredential.Text = "Current Credential          : "
+$objO365Status.Controls.Add($objLabelCredential) 
 
 
 #O365 Connection Status
-$objLabelVMname = New-Object System.Windows.Forms.Label
-$objLabelVMname.Location = New-Object System.Drawing.Size(260,20) 
-$objLabelVMname.Size = New-Object System.Drawing.Size(25,20) 
-$objLabelVMname.Text = "N/A"
-$objO365Status.Controls.Add($objLabelVMname) 
+$objLabelConnect = New-Object System.Windows.Forms.Label
+$objLabelConnect.Location = New-Object System.Drawing.Size(260,20) 
+$objLabelConnect.Size = New-Object System.Drawing.Size(25,20) 
+$objLabelConnect.Text = "N/A"
+$objO365Status.Controls.Add($objLabelConnect) 
 
 #O365 Connection Status
-$objLabelVMname = New-Object System.Windows.Forms.Label
-$objLabelVMname.Location = New-Object System.Drawing.Size(260,60) 
-$objLabelVMname.Size = New-Object System.Drawing.Size(25,20) 
-$objLabelVMname.Text = "N/A"
-$objO365Status.Controls.Add($objLabelVMname) 
+$objLabelCred = New-Object System.Windows.Forms.Label
+$objLabelCred.Location = New-Object System.Drawing.Size(260,60) 
+$objLabelCred.Size = New-Object System.Drawing.Size(25,20) 
+$objLabelCred.Text = "N/A"
+$objO365Status.Controls.Add($objLabelCred) 
 
 $OKButton = New-Object System.Windows.Forms.Button
 $OKButton.Location = New-Object System.Drawing.Size(360,25)
@@ -102,15 +126,3 @@ $objForm.Add_Shown({$objForm.Activate()})
 [void] $objForm.ShowDialog()
 
 
-function Connect-Exch()  {
-    Write-Output "Credentials cache lookup path set to $PWD"
-    if(![System.IO.File]::Exists($inputCred)){
-        # Connection to tenant - use this only 1st time to collect credentials
-        Get-Credential | Export-Clixml $inputCred
-    } 
-
-    #Write-Host "Credentials file located for user $msolAccount on tenant $msolTenantName ! Loading from cache..."
-    # Set this variable to the location of the file where credentials are cached
-    $UsrCredential = Import-Clixml $$inputCred
-    
-}
