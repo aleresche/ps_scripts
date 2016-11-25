@@ -107,7 +107,8 @@ function Connect-Exch()  {
     if(![System.IO.File]::Exists($inputCred)){
         # Connection to tenant - use this only 1st time to collect credentials
         Get-Credential | Export-Clixml $inputCred
-    }   
+    } 
+      
     #Write-Host "Credentials file located for user $msolAccount on tenant $msolTenantName ! Loading from cache..."
     # Set this variable to the location of the file where credentials are cached
     $UsrCredential = Import-Clixml $$inputCred
