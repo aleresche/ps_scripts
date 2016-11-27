@@ -40,12 +40,11 @@ function Connect-Exch{
     # Set this variable to the location of the file where credentials are cached
     $UsrCredential = Import-Clixml $inputCred
     #Connecting to Azure AD & Exchange Online
-    $objLabelConnect.Text = "Connecting.."
+    write-host "Connecting..." -ForegroundColor Yellow
     #connect-msolservice -credential $UserCredential
     $Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UserCredential -Authentication Basic -AllowRedirection
     Import-PSSession $Session -AllowClobber |  out-null
-    $objLabelConnect.Text = "Connected"
-    $objviewOutput.items.add($(Get-PSSession | where {$_.Name -eq "ExchangeOnline"}))
+    write-host "Connected !" -ForegroundColor Yellow
 }
 <#
 .INIT FROM
@@ -96,15 +95,16 @@ $objLabelCred.Size = New-Object System.Drawing.Size(25,20)
 $objLabelCred.Text = "N/A"
 $objO365Status.Controls.Add($objLabelCred) 
 
-$OKButton = New-Object System.Windows.Forms.Button
-$OKButton.Location = New-Object System.Drawing.Size(360,25)
-$OKButton.Size = New-Object System.Drawing.Size(75,50)
-$OKButton.Text = "Connect"
-$OKButton.Add_Click({
+$ConnectButton = New-Object System.Windows.Forms.Button
+$ConnectButton.Location = New-Object System.Drawing.Size(360,25)
+$ConnectButton.Size = New-Object System.Drawing.Size(75,50)
+$ConnectButton.FlatStyle = "flat"
+$ConnectButton.FlatAppearance.BorderSize = 1
+$ConnectButton.Text = "Connect"
+$ConnectButton.Add_Click({
     Connect-Exch
- 
 })
-$objO365Status.Controls.Add($OKButton)
+$objO365Status.Controls.Add($ConnectButton)
 
 #O365 Connection Console Group
 $objOutputGrp = New-Object System.Windows.Forms.GroupBox
