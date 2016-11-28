@@ -17,9 +17,9 @@
 .PARAMETERS
 #>
 Param(
-    [Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$true)]  
+    [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]  
     [string] $Username,  
-    [Parameter(Position=1, Mandatory=$true, ValueFromPipeline=$true)]  
+    [Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]  
     [string] $Password,
     [Parameter(Position=2, Mandatory=$true, ValueFromPipeline=$true)]  
     [string] $CurrentDomain,
@@ -49,15 +49,16 @@ if(![System.IO.File]::Exists($inputCred)){
          Get-Credential | Export-Clixml $inputCred
     }
 } 
-$AdmUsr = get-content ..\Cred.xml | select-string "UserName" -replace '<S N="UserName">'; ''
+$AdmUsr = get-content ..\Cred.xml | select-string "UserName"
+$AdmUsr = $AdmUsr -replace '<S N="UserName">'; ''
 $AdmUsr = $AdmUsr -replace '</S>'; ''
 write-host "Loading Credential of $AdmUsr from cache..." -ForegroundColor Yellow
 # Set this variable to the location of the file where credentials are cached
 $UsrCredential = Import-Clixml $inputCred
 #Connecting to Azure AD & Exchange Online
 write-host "Connecting..." -ForegroundColor Yellow
-#connect-msolservice -credential $UserCredential
-$Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UserCredential -Authentication Basic -AllowRedirection
+connect-msolservice -credential $UsrCredential
+$Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UsrCredential -Authentication Basic -AllowRedirection
 Import-PSSession $Session -AllowClobber |  out-null
 write-host "Connected !" -ForegroundColor Yellow
 
@@ -78,7 +79,12 @@ do {
      {
            '1' {'You chose option #1'} 
            '2' {'You chose option #2'}
-           'q' {exit}
+           'q' {
+                #Cleaning sessions
+                write-host "Closing sessions...`nOperation aborted" -ForegroundColor Yellow
+                Get-PSSession | Remove-PSSession
+                exit
+               }
      }
 }
 until ($input -eq 'q' -or $input -eq '1'-or $input -eq '2' )
@@ -105,7 +111,7 @@ if ($input -eq '1'){  # Migrating switch
             $NewEmailsaddresses = $NewEmailsaddresses -replace ("smtp:$($Mailbox.PrimarySmtpAddress)","")
             $OutSMTP =  "Updating User Email : "+$Mailbox.identity+" `nFrom : "+$Mailbox.Emailaddresses+" `nto : "+$NewEmailsaddresses+"`nUpdating User Alias From : "+$Mailbox.Alias+" to : "+$NewAlias  
             write-host $OutSMTP  -ForegroundColor Magenta
-            set-mailbox $Mailbox.identity -Emailaddresses $NewEmail -Alias $NewAlias -confirm:$false
+            #set-mailbox $Mailbox.identity -Emailaddresses $NewEmail -Alias $NewAlias -confirm:$false
             $OutSMTP | out-file -FilePath $pwd\Migr_SMTP_renaming_report_$date.log -append -Encoding Default
             $CountSMTP++
         }
@@ -118,15 +124,13 @@ if ($input -eq '1'){  # Migrating switch
     #Renaming UPN
     write-host "Renaming UPNs...." -ForegroundColor Yellow
     Get-MsolUser -All | Where {$_.UserPrincipalName.ToLower().EndsWith($CurrentDomain.ToString()) -and $_.UserPrincipalName.ToString() -match $filter} | ForEach {
-        #if($count -eq 1) {#For Testing the first result
         $upnVal = $_.UserPrincipalName.Split("@")[0] + "@"+$NewDomain.ToString()
         $upnVal = $upnVal -replace $filter,""
         $OutUPN = "Changing UPN value from: "+ $_.UserPrincipalName+" to: "+ $upnVal
         Write-Host $OutUPN -ForegroundColor Magenta
         $OutUPN | out-file -FilePath $pwd\Migr_UPN_renaming_report_$date.log -append -Encoding Default
-        Set-MsolUserPrincipalName -ObjectId $_.ObjectId -NewUserPrincipalName ($upnVal)
+        #Set-MsolUserPrincipalName -ObjectId $_.ObjectId -NewUserPrincipalName ($upnVal)
         $count++
-        #}
     }           
     $TotalUPN = "Total Users Renamed : " + $count 
     $TotalUPN | out-file -FilePath $pwd\Migr_UPN_renaming_report_$date.log -append -Encoding Default
@@ -155,7 +159,7 @@ if ($input -eq '2'){
             $NewEmailsaddresses = $NewEmailsaddresses -replace ("smtp:$($Mailbox.PrimarySmtpAddress)","")
             $OutSMTP =  "Updating User Email : "+$Mailbox.identity+" From : "+$Mailbox.Emailaddresses+" to : "+$NewEmailsaddresses+"`nUpdating User Alias From : "+$Mailbox.Alias+" to : "+$NewAlias
             write-host $OutSMTP  -ForegroundColor Magenta
-            set-mailbox $Mailbox.identity -Emailaddresses $NewEmailsaddresses -Alias $NewAlias -confirm:$false
+            #set-mailbox $Mailbox.identity -Emailaddresses $NewEmailsaddresses -Alias $NewAlias -confirm:$false
             $OutSMTP | out-file -FilePath $pwd\Rollback_SMTP_renaming_report_$date.log -append -Encoding Default
             $CountSMTP++
         }
@@ -168,16 +172,14 @@ if ($input -eq '2'){
     #Renaming UPN
     write-host "Renaming UPNs...." -ForegroundColor Yellow
     Get-MsolUser -All | Where {$_.UserPrincipalName.ToLower() -like "*$CurrentDomain"} | ForEach {
-        #if($count -eq 1) { #For Testing the first result 
         $upnVal = $_.UserPrincipalName.Split("@")[0]+ $filter + "@"+$NewDomain.ToString()
         $OutUPN = "Changing UPN value from: "+ $_.UserPrincipalName+" to: "+ $upnVal
         Write-Host $OutUPN -ForegroundColor Magenta
         $OutUPN | out-file -FilePath $pwd\Rollback_UPN_renaming_report_$date.log -append -Encoding Default
         if ((get-mailbox $_.UserPrincipalName) -eq $true){
-            Set-MsolUserPrincipalName -ObjectId $_.ObjectId -NewUserPrincipalName ($upnVal)
+           # Set-MsolUserPrincipalName -ObjectId $_.ObjectId -NewUserPrincipalName ($upnVal)
         }
         $count++
-         #}
     }         
     $TotalUPN = "Total UPNs Renamed : "+$count 
     $TotalUPN | out-file -FilePath $pwd\Rollback_UPN_renaming_report_$date.log -append -Encoding Default
