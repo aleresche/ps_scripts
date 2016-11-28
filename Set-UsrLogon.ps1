@@ -2,7 +2,7 @@
 .Synopsis
    	Retrieve and Modify SMTP/UPN/ALIAS/SIP mail address from an office 365 tenant
 .EXAMPLE
-	./Set-Usrlogon.ps1 -Username admin@xxx.onmicrosoft.com -Password mypass123 -currentdomain xxx.onmicrosoft.com -newdomain xxx.com -filter _glion.edu
+	./Set-Usrlogon.ps1 -Username admin@xxx.onmicrosoft.com -Password mypass123 -currentdomain xxx.onmicrosoft.com -newdomain xxx.com -filter
 .NOTES
    	Version 1.6
     Features :
