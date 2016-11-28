@@ -1,14 +1,18 @@
 ﻿<# 
 .Synopsis
-   	Retrieve and Modify SMTP/UPN/ALIAS/SIP mail address from an office 365 tenant
+   	Retrieve and Modify SMTP/UPN/ALIAS/SIP mail address from an office 365 tenant, 
 .EXAMPLE
-	./Set-Usrlogon.ps1 -Username admin@xxx.onmicrosoft.com -Password mypass123 -currentdomain xxx.onmicrosoft.com -newdomain xxx.com -filter
+	./Set-Usrlogon.ps1 -Username admin@xxx.onmicrosoft.com -Password mypass123 -currentdomain xxx.onmicrosoft.com -newdomain xxx.com -filter <StringToAddorRemove>
+    
+    ./Set-UsrLogon.ps1 -CurrentDomain xxx.onmicrosoft.com -Newdomain xxx.com
+    
+    ./Set-UsrLogon.ps1 -CurrentDomain xxx.onmicrosoft.com -Newdomain xxx.com -filter <StringToAddorRemove>
 .NOTES
    	Version 1.6
     Features :
         Rename - UPN/EMAILS/SIP/ALIAS
         Extract result in log file
-        Smart Renaming
+        Smart Renaming - Filter Option that allow to insert or remove string from username 
         Credential Rework 
         UI rework
    	Written by Arnaud Leresche
