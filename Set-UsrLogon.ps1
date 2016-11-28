@@ -34,7 +34,8 @@ Param(
 #>
 #Remove all existing Powershell sessions  
 Get-PSSession | Remove-PSSession
-
+#Introduction
+write-host "Preparing Tool...`nLooking for login cache..." -ForegroundColor Yellow
 #Login Management
 $inputCred = Join-Path $PWD.ToString()"\..\Cred.xml"  
 if(![System.IO.File]::Exists($inputCred)){
@@ -48,15 +49,16 @@ if(![System.IO.File]::Exists($inputCred)){
     else {
          Get-Credential | Export-Clixml $inputCred
     }
-} 
+}
+#load User Admin for display
 $AdmUsr = get-content ..\Cred.xml | select-string "UserName"
 $AdmUsr = $AdmUsr -replace '<S N="UserName">'; ''
 $AdmUsr = $AdmUsr -replace '</S>'; ''
-write-host "Loading Credential of $AdmUsr from cache..." -ForegroundColor Yellow
+$Domain = $AdmUsr -split '@'
 # Set this variable to the location of the file where credentials are cached
 $UsrCredential = Import-Clixml $inputCred
 #Connecting to Azure AD & Exchange Online
-write-host "Connecting..." -ForegroundColor Yellow
+write-host "Connecting using User : " $AdmUsr -ForegroundColor Yellow
 connect-msolservice -credential $UsrCredential
 $Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UsrCredential -Authentication Basic -AllowRedirection
 Import-PSSession $Session -AllowClobber |  out-null
@@ -65,20 +67,20 @@ write-host "Connected !" -ForegroundColor Yellow
 
 # Menu multiple choice to guide the user
 function Show-Menu {
-     Write-Host "================ Userlogon Renaming ================" 
-     
-     Write-Host "1: Press '1' to Migrate from $CurrentDomain to $NewDomain" 
-     Write-Host "2: Press '2' to Rollback from $CurrentDomain to $Newdomain" 
-     Write-Host "Q: Press 'Q' to quit." 
+     Write-Host "================ Userlogon Renaming ================" -ForegroundColor Yellow
+     Write-host "Connected on Tenant : $($Domain[1])" -ForegroundColor Yellow
+     Write-Host "1: Press '1' to Migrate from $CurrentDomain to $NewDomain" -ForegroundColor Yellow
+     Write-Host "2: Press '2' to Rollback from $CurrentDomain to $Newdomain"  -ForegroundColor Yellow
+     Write-Host "Q: Press 'Q' to quit." -ForegroundColor Yellow
 }
-
 do {
      Show-Menu
-     $input = Read-Host "Please make a selection"
+     write-host "Please make a selection" -ForegroundColor Yellow
+     $input = Read-Host
      switch ($input)
      {
-           '1' {'You chose option #1'} 
-           '2' {'You chose option #2'}
+           '1' {write-host 'You chose option #1' -ForegroundColor Yellow} 
+           '2' {write-host 'You chose option #2' -ForegroundColor Yellow}
            'q' {
                 #Cleaning sessions
                 write-host "Closing sessions...`nOperation aborted" -ForegroundColor Yellow
@@ -112,7 +114,7 @@ if ($input -eq '1'){  # Migrating switch
             $OutSMTP =  "Updating User Email : "+$Mailbox.identity+" `nFrom : "+$Mailbox.Emailaddresses+" `nto : "+$NewEmailsaddresses+"`nUpdating User Alias From : "+$Mailbox.Alias+" to : "+$NewAlias  
             write-host $OutSMTP  -ForegroundColor Magenta
             #set-mailbox $Mailbox.identity -Emailaddresses $NewEmail -Alias $NewAlias -confirm:$false
-            $OutSMTP | out-file -FilePath $pwd\Migr_SMTP_renaming_report_$date.log -append -Encoding Default
+            $OutSMTP -split "`n" | out-file -FilePath $pwd\Migr_SMTP_renaming_report_$date.log -append -Encoding Default
             $CountSMTP++
         }
     }
@@ -160,7 +162,7 @@ if ($input -eq '2'){
             $OutSMTP =  "Updating User Email : "+$Mailbox.identity+" From : "+$Mailbox.Emailaddresses+" to : "+$NewEmailsaddresses+"`nUpdating User Alias From : "+$Mailbox.Alias+" to : "+$NewAlias
             write-host $OutSMTP  -ForegroundColor Magenta
             #set-mailbox $Mailbox.identity -Emailaddresses $NewEmailsaddresses -Alias $NewAlias -confirm:$false
-            $OutSMTP | out-file -FilePath $pwd\Rollback_SMTP_renaming_report_$date.log -append -Encoding Default
+            $OutSMTP -split "`n" | out-file -FilePath $pwd\Rollback_SMTP_renaming_report_$date.log -append -Encoding Default
             $CountSMTP++
         }
     }
