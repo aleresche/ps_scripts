@@ -25,40 +25,48 @@ Param(
 #Remove all existing Powershell sessions  
 Get-PSSession | Remove-PSSession
 #Introduction
-write-host "Preparing Info to setup connection...`nLooking for login cache..." -ForegroundColor Yellow
+cls
+write-host "Connect to MS O365 Online services" -ForegroundColor Yellow
+write-host "==================================" -ForegroundColor Yellow
+write-host "Preparing data to setup connection...`nLooking for login cache..." -ForegroundColor Yellow
+
 #Login Management
-$inputCred = Join-Path $PWD.ToString()"\..\Cred.xml"  
-if(![System.IO.File]::Exists($inputCred)){
-    # Connection to tenant - use this only 1st time to collect credentials
-    write-host "No Credential Found, creating cache..."
-    if (([string]::IsNullOrEmpty($Username) -eq $false) -and ([string]::IsNullOrEmpty($Password) -eq $false)) {
-        $SecurePassword = ConvertTo-SecureString -AsPlainText $Password -Force
-        #Build credentials object  
-        $inputCred  = New-Object System.Management.Automation.PSCredential $Username, $SecurePassword
-    }
-    else {
-         Get-Credential | Export-Clixml $inputCred
-    }
+$Admins = @()
+#Cache checking 
+get-childitem -Path .\ | where {$_ -like "Cache_*"} | foreach{
+    $AdmUsr = get-content $_ | select-string "UserName"
+    $AdmUsr = $AdmUsr -replace '<S N="UserName">'; ''
+    $AdmUsr = $AdmUsr -replace '</S>'; ''
+    #Split username/domain
+    $Adm = $AdmUsr -split '@'
+    $admins.Add($Adm)
 }
-#load User Admin for display
-$AdmUsr = get-content ..\Cred.xml | select-string "UserName"
-$AdmUsr = $AdmUsr -replace '<S N="UserName">'; ''
-$AdmUsr = $AdmUsr -replace '</S>'; ''
-$Domain = $AdmUsr -split '@'
+#No cache found asking for Credential
+if(![System.IO.File]::Exists($inputCred) -and $Admins -eq $null){
+    write-host "No Credential Found, creating cache..."
+    #create unique ID for cred cache file
+    $guidSession = [guid]::NewGuid()
+    $inputCred = Join-Path $PWD.ToString()".\Cache_$guidSession.xml"  
+    Get-Credential | Export-Clixml $inputCred
+}
+
+
 # Set this variable to the location of the file where credentials are cached
 $UsrCredential = Import-Clixml $inputCred
 
 # Menu multiple choice to guide the user
-function Show-Menu {
+function Show-MenuConnect {
      Write-Host "================ Connecting ================" -ForegroundColor Yellow
      Write-host "Connecting on Tenant : $($Domain[1])" -ForegroundColor Yellow
+     write-host "With User : $($Domain[0])" -ForegroundColor Yellow
+     Write-Host "================= Options ==================" -ForegroundColor Yellow
      Write-Host "1: Press '1' Connect to O365 only" -ForegroundColor Yellow
      Write-Host "2: Press '2' Connect to O365 & MS Online"  -ForegroundColor Yellow
-     Write-host "3: Press '3' Change admin login"
+     Write-host "3: Press '3' Change admin login" -ForegroundColor Yellow
      Write-Host "Q: Press 'Q' to quit." -ForegroundColor Yellow
 }
 do {
-     Show-Menu
+     Show-MenuConnect
      write-host "Please make a selection" -ForegroundColor Yellow
      $input = Read-Host
      switch ($input)
@@ -76,7 +84,9 @@ do {
 }
 until ($input -eq 'q' -or $input -eq '1'-or $input -eq '2'-or $input -eq '3')
 
-if ($input -eq '2'){}
+if ($input -eq '3'){
+    write-host "Changing admin login...`nPlease Input new Credential" -ForegroundColor Yellow
+}
 
 #Connecting to Azure AD & Exchange Online
 write-host "Connecting using User : " $AdmUsr -ForegroundColor Yellow
