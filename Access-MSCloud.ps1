@@ -5,13 +5,13 @@
    	Connect to MS Online Cloud Services including the following subservice :
     - Exchange Online (Office 365)
     - Azure AD (MS Online)
-    - Skype for Business (SkypeforbusinessOnline)
 .EXAMPLE
 	./Access-MSCloud.ps1
 .NOTES
    	Version 2.0
     Graphical Version
-
+    future version 
+    - Skype for Business (SkypeforbusinessOnline)
    	Written by Arnaud Leresche
 #>
 #===========================================================================
@@ -66,13 +66,14 @@ function get-cache {
     return $Admins
 }
 
+
 #===========================================================================
 # Display logins in cache 
 #===========================================================================
 #Cache checking 
 $AdmUsr = get-cache
 if($AdmUsr -eq $null){
-    $ListLogin.item.Add("No Login found in cache..")
+    $ListLogin.items.Add("No Login found in cache..")
 }
 #if Cache found
 else {
@@ -128,17 +129,19 @@ $buttonConnect.Add_Click({
     $UsrCredential = Import-Clixml $inputCred
     #Creating PS Session
     $labelStatus.Content = "Connecting.."
+    $listViewConsole.Items.Add("SUCCESS : Connecting to O365 Service")
     $Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UsrCredential -Authentication Basic -AllowRedirection
-    Start-Process powershell {
-        Import-PSSession $Session -AllowClobber |  out-null
-    }
+    Import-PSSession $Session -AllowClobber |  out-null
+    
     
     $listViewConsole.Items.Add("SUCCESS : Connected to O365 Service")
     $listViewConsole.Items.Add("DOMAIN  : $($LabelStatusDomain.Content)")
     $labelStatus.Content = "Connected"
+    $From.
 })
 
 #===========================================================================
 # Shows the form
 #===========================================================================
-$Form.ShowDialog() | out-null
+$Form.ShowDialog() #| out-null
+
