@@ -2,7 +2,7 @@
 .Synopsis
    	Retrieve and Modify SMTP/UPN/ALIAS/SIP mail address
 .EXAMPLE
-	./Rename-SMTPAddr.ps1 -Username admin@xxx.onmicrosoft.com -Password mypass123 -currentdomain xxx.onmicrosoft.com -newdomain xxx.com -filter _domain.xx
+	./Rename-SMTPAddr.ps1 -Username admin@xxx.onmicrosoft.com -Password mypass123 -currentdomain xxx.onmicrosoft.com -newdomain xxx.com -filter _glion.edu
 .NOTES
    	Version 1.3
     - add UPN renaming
@@ -64,15 +64,14 @@ function Show-Menu {
 
 do {
      Show-Menu
-     write-host "Please make a selection" -ForegroundColor Yellow
-     $input = Read-Host 
+     $input = Read-Host "Please make a selection"
      switch ($input)
      {
-           '1' {write-host 'Starting Update process'-ForegroundColor Yellow} 
+           '1' {'You chose option #1'} 
            'q' {exit}
      }
 }
-until ($input -eq 'q' -or $input -eq '1')
+until ($input -eq 'q' -or $input -eq '1'-or $input -eq '2' )
 
 #>
 <#
@@ -85,7 +84,7 @@ if ($input -eq '1'){  # Migrating switch
     $Mailboxes = get-mailbox -ResultSize Unlimited
     write-host "Renaming Emails...." -ForegroundColor Yellow
     foreach ($Mailbox in $Mailboxes){
-        if ($Mailbox.PrimarySmtpAddress -match $CurrentDomain <#-and $Mailbox.PrimarySmtpAddress.ToString() -match $Filter#>){
+        if ($Mailbox.PrimarySmtpAddress -match $CurrentDomain -and $Mailbox.PrimarySmtpAddress.ToString() -match $Filter){
             $Smtp = $Mailbox.PrimarySmtpAddress
             $NewEmail = $Smtp -replace $CurrentDomain.Tostring(),$NewDomain.ToString()
             $NewEmail = $NewEmail -replace $Filter,""
@@ -99,12 +98,12 @@ if ($input -eq '1'){  # Migrating switch
     $TotalSMTP = "Total Emails Renamed : " + $CountSMTP
     $TotalSMTP | out-file -FilePath $pwd\Migr_SMTP_renaming_report_$date.txt -append -Encoding Default
     write-host "=====================`n"+ $TotalSMTP -ForegroundColor Magenta
-    write-host "Done!`n`n" -ForegroundColor Yellow
+    write-host "Done!" -ForegroundColor Yellow
 
 
     #Renaming UPN
     write-host "Renaming UPNs...." -ForegroundColor Yellow
-    Get-MsolUser -All | Where {$_.UserPrincipalName.ToLower().EndsWith($CurrentDomain.ToString()) <#-and $_.UserPrincipalName.ToString() -match $filter#>} | ForEach {
+    Get-MsolUser -All | Where {$_.UserPrincipalName.ToLower().EndsWith($CurrentDomain.ToString()) -and $_.UserPrincipalName.ToString() -match $filter} | ForEach {
      #if($count -eq 1) #For Testing the first result
      # {
      $upnVal = $_.UserPrincipalName.Split("@")[0] + "@"+$NewDomain.ToString()
@@ -112,15 +111,65 @@ if ($input -eq '1'){  # Migrating switch
      $OutUPN = "Changing UPN value from: "+ $_.UserPrincipalName+" to: "+ $upnVal
      Write-Host $OutUPN -ForegroundColor Magenta
      $OutUPN | out-file -FilePath $pwd\Migr_UPN_renaming_report_$date.txt -append -Encoding Default
-     Set-MsolUserPrincipalName -ObjectId $_.ObjectId -NewUserPrincipalName ($upnVal)
+     #Set-MsolUserPrincipalName -ObjectId $_.ObjectId -NewUserPrincipalName ($upnVal)
      $count++
      # }
      }           
     $TotalUPN = "Total UPNs Renamed : " + $count 
     $TotalUPN | out-file -FilePath $pwd\Migr_UPN_renaming_report_$date.txt -append -Encoding Default
     write-host "=====================`n"+ $TotalUPN -ForegroundColor Magenta
-    write-host "Done!`n`n" -ForegroundColor Yellow
+    write-host "Done!" -ForegroundColor Yellow
 }
+
+<#
+.Main Code - Rollback EMail & UPN domain + add Filter Entry
+#>
+
+if ($input -eq '2'){
+    #Renaming SMTP Primary 
+    $Mailboxes = get-mailbox -ResultSize Unlimited
+    write-host "Renaming Emails...." -ForegroundColor Yellow
+    foreach ($Mailbox in $Mailboxes){
+        if ($Mailbox.PrimarySmtpAddress -match $NewDomain -and $Mailbox.PrimarySmtpAddress.ToString() -match $Filter){
+            $Smtp = $Mailbox.PrimarySmtpAddress
+            $NewEmail = $Smtp -replace $NewDomain.ToString(),$CurrentDomain.Tostring()
+            $Usr = $smtp.Split("@")[0] + $filter
+            $NewEmail = $Usr +"@"+$NewDomain 
+            $OutSMTP = "Changing Email from " + $Mailbox.PrimarySmtpAddress.ToString()+ " to : "+ $NewEmail 
+            write-host $OutSMTP  -ForegroundColor Magenta
+            set-mailbox $Mailbox.Alias -Emailaddresses $NewEmail   -confirm:$false
+            $OutSMTP | out-file -FilePath $pwd\Rollback_SMTP_renaming_report_$date.txt -append -Encoding Default
+            $CountSMTP++
+        }
+    }
+    $TotalSMTP = "Total Emails Renamed : "+$CountSMTP
+    $TotalSMTP | out-file -FilePath $pwd\Rollback_SMTP_renaming_report_$date.txt -append -Encoding Default
+    write-host "=====================`n"$TotalSMTP -ForegroundColor Magenta
+    write-host "Done!" -ForegroundColor Yellow
+
+
+    #Renaming UPN
+    write-host "Renaming UPNs...." -ForegroundColor Yellow
+    Get-MsolUser -All | Where {$_.UserPrincipalName.ToLower().EndsWith($NewDomain.ToString()) -and $_.UserPrincipalName.ToString() -match $filter} | ForEach {
+     #if($count -eq 1) #For Testing the first result
+     # {
+     echo $_.UserPrincipalName
+     $upnVal = $_.UserPrincipalName.Split("@")[0] + "@"+$CurrentDomain.ToString()
+     $upnVal = $upnVal -replace $filter,""
+     $OutUPN = "Changing UPN value from: "+ $_.UserPrincipalName+" to: "+ $upnVal
+     Write-Host $OutUPN -ForegroundColor Magenta
+     $OutUPN | out-file -FilePath $pwd\Rollback_UPN_renaming_report_$date.txt -append -Encoding Default
+     #Set-MsolUserPrincipalName -ObjectId $_.ObjectId -NewUserPrincipalName ($upnVal)
+     $count++
+     # }
+     }           
+    $TotalUPN = "Total UPNs Renamed : "+$count 
+    $TotalUPN | out-file -FilePath $pwd\Rollback_UPN_renaming_report_$date.txt -append -Encoding Default
+    write-host "=====================`n"$TotalUPN -ForegroundColor Magenta
+    write-host "Done!" -ForegroundColor Yellow
+}
+
+
 
 #Cleaning sessions
  write-host "Closing sessions...`nOperation completed" -ForegroundColor Yellow

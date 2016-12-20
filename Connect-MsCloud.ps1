@@ -73,7 +73,11 @@ do {
      {
            '1' {write-host 'You chose option #1' -ForegroundColor Yellow} 
            '2' {write-host 'You chose option #2' -ForegroundColor Yellow}
-           '3' {write-host 'You chose option #2' -ForegroundColor Yellow}
+           '3' {write-host 'You chose option #2' -ForegroundColor Yellow
+                write-host "Changing admin login...`nPlease Input new Credential" -ForegroundColor Yellow
+                Get-Credential | Export-Clixml $inputCred
+                Show-MenuConnect
+               }
            'q' {
                 #Cleaning sessions
                 write-host "Closing sessions...`nOperation aborted" -ForegroundColor Yellow
@@ -84,12 +88,10 @@ do {
 }
 until ($input -eq 'q' -or $input -eq '1'-or $input -eq '2'-or $input -eq '3')
 
-if ($input -eq '3'){
-    write-host "Changing admin login...`nPlease Input new Credential" -ForegroundColor Yellow
-}
 
 #Connecting to Azure AD & Exchange Online
 write-host "Connecting using User : " $AdmUsr -ForegroundColor Yellow
+$UsrCredential = Import-Clixml $inputCred
 if ($input -eq '2'){
     connect-msolservice -credential $UsrCredential
 }

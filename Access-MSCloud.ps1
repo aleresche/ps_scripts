@@ -103,8 +103,8 @@ $buttonSetlogin.Add_Click({
         $CurrentUsr = $listLogin.SelectedItem.ToString()
         $cacheXMLpath = get-childitem -Path .\ | where {$_ -like "Cache_*"}
         foreach ($xml in $cacheXMLpath.Name ){
-                if (get-content .\$xml | select-string $CurrentUsr){
-                    $inputCred = Join-Path ".\"$xml 
+                if (get-cache $xml | select-string $CurrentUsr -eq $true){
+                    $inputCred = $xml 
                 } 
         }
         #Import Real XML login file
@@ -129,15 +129,16 @@ $buttonConnect.Add_Click({
     $UsrCredential = Import-Clixml $inputCred
     #Creating PS Session
     $labelStatus.Content = "Connecting.."
-    $listViewConsole.Items.Add("SUCCESS : Connecting to O365 Service")
     $Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UsrCredential -Authentication Basic -AllowRedirection
     Import-PSSession $Session -AllowClobber |  out-null
+    #Test if the session is available if yes display Connected + domain status
+    if ( $(get-pssession).Name -eq "ExchangeOnline" -and $(get-pssession).Availability -eq "Available") {
+        $labelStatus.Content = "Connected" 
+    }
+    $Form.Showintaskbar = $true
+    Show-Console
+
     
-    
-    $listViewConsole.Items.Add("SUCCESS : Connected to O365 Service")
-    $listViewConsole.Items.Add("DOMAIN  : $($LabelStatusDomain.Content)")
-    $labelStatus.Content = "Connected"
-    $From.
 })
 
 #===========================================================================
