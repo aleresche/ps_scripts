@@ -36,7 +36,7 @@ write-host "Endpoint setup" -ForegroundColor Yellow
 $ews = New-Object Microsoft.Exchange.WebServices.Data.ExchangeService -ArgumentList "Exchange2007_SP1"
 #set up credential
 $cred = (Get-Credential).GetNetworkCredential()
-$ews.Credentials = New-Object System.Net.NetworkCredential -ArgumentList $credDest.UserName, $credDest.Password, $credDest.Domain
+$ews.Credentials = New-Object System.Net.NetworkCredential -ArgumentList $cred.UserName, $cred.Password, $cred.Domain
 $ews.AutodiscoverUrl( ( Read-Host "Enter mailbox (email address)" ),$TestUrlCallback)
 
 write-host "EWS endpoint configured`nReading Source Endpoint..." -ForegroundColor Yellow
