@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-   	Connect through Exchange web services and Delete Items in inbox
+   	Connect through Exchange web services read mailbox content
 .DESCRIPTION
    	Connect OWA, and retrieve mailbox content
     First version view content only
@@ -29,23 +29,24 @@ $TestUrlCallback = {
 <#
 .MAIN CODE
 #>
-#set up EWS Source connector
-write-host "Source Endpoint setup" -ForegroundColor Yellow
-$ewsSrc = New-Object Microsoft.Exchange.WebServices.Data.ExchangeService -ArgumentList "Exchange2007_SP1"
+
+
+#set up EWS  connector
+write-host "Endpoint setup" -ForegroundColor Yellow
+$ews = New-Object Microsoft.Exchange.WebServices.Data.ExchangeService -ArgumentList "Exchange2007_SP1"
 #set up credential
-$credSrc = (Get-Credential).GetNetworkCredential()
-$ewsSrc.Credentials = New-Object System.Net.NetworkCredential -ArgumentList $credSrc.UserName, $credSrc.Password, $credSrc.Domain
-#Specify Mailbox (auto discover will configure the correct exchange infos)
-$ewsSrc.AutodiscoverUrl( ( Read-Host "Enter mailbox (email address)" ) )
+$cred = (Get-Credential).GetNetworkCredential()
+$ews.Credentials = New-Object System.Net.NetworkCredential -ArgumentList $credDest.UserName, $credDest.Password, $credDest.Domain
+$ews.AutodiscoverUrl( ( Read-Host "Enter mailbox (email address)" ),$TestUrlCallback)
 
 write-host "EWS endpoint configured`nReading Source Endpoint..." -ForegroundColor Yellow
 #finding 10 first items in Inbox
-$results = $ewsSrc.FindItems(
+$results = $ews.FindItems(
 	"Inbox",
 	( New-Object Microsoft.Exchange.WebServices.Data.ItemView -ArgumentList 10 )
 )
 #Display Result
-$results.Items | ForEach-Object {
-		$_.Subject
-		[void]$_.Delete([Microsoft.Exchange.WebServices.Data.DeleteMode]::HardDelete)
- }
+$results.Items | ForEach-Object { $_.Subject }
+
+		#[void]$_.Delete([Microsoft.Exchange.WebServices.Data.DeleteMode]::HardDelete)
+

@@ -23,8 +23,9 @@ Param(
 #############################################################################################################################
 #Retrieve all files inside specific folder
 $results = Get-ChildItem $selectedPath -Recurse -Include "*.bak","*.trn"  
+write-host $results.count "file has been found...`n" -ForegroundColor Yellow
 foreach ($path in $results) {
-	Write-Host $path
 	$filename = [System.IO.Path]::GetFileName($path)
+    Write-Host "Copying " $filename " to S3" -ForegroundColor Magenta
 	Write-S3Object -BucketName my-bucket -File $path -Key subfolder/$filename -CannedACLName Private -AccessKey accessKey -SecretKey secretKey
 }
