@@ -61,7 +61,7 @@ $xaml.SelectNodes("//*[@Name]") | %{Set-Variable -Name ($_.Name) -Value $Form.Fi
 # Function to Check Login Cache
 #===========================================================================
 function get-cache {
-    $Admins = get-childitem -Path .\ | where {$_ -like "Cache_*"} | foreach{get-content $_ | Select-String "UserName"}
+    $Admins = get-childitem -Path .\ | Where-Object {$_ -like "Cache_*"} | ForEach-Object {get-content $_ | Select-String "UserName"}
     $Admins = $Admins -replace '<S N="UserName">', '' -replace '</S>', '' -replace '(^\s+|\s+$)','' -replace '\s+',' '
     return $Admins
 }
@@ -101,9 +101,9 @@ $buttonSetlogin.Add_Click({
     # otherwise cache exist, looping through them to find the one selected
     else {
         $CurrentUsr = $listLogin.SelectedItem.ToString()
-        $cacheXMLpath = get-childitem -Path .\ | where {$_ -like "Cache_*"}
+        $cacheXMLpath = get-childitem -Path .\ | Where-Object {$_ -like "Cache_*"}
         foreach ($xml in $cacheXMLpath.Name ){
-                if (get-cache $xml | select-string $CurrentUsr -eq $true){
+                if (get-cache $xml -eq $CurrentUsr){
                     $inputCred = $xml 
                 } 
         }
@@ -136,13 +136,10 @@ $buttonConnect.Add_Click({
         $labelStatus.Content = "Connected" 
     }
     $Form.Showintaskbar = $true
-    Show-Console
-
-    
 })
 
 #===========================================================================
 # Shows the form
 #===========================================================================
-$Form.ShowDialog() #| out-null
+$Form.ShowDialog() | out-null
 
