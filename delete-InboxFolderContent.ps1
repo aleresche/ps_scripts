@@ -1,23 +1,26 @@
 <#
 .SYNOPSIS
-   	Connect through Exchange web services read mailbox content
+   	Connect through EWS and delete Inbox folder content of a mailbox
 .DESCRIPTION
    	Connect OWA, and retrieve mailbox content
-    First version view content only
+    delete this content 
 .EXAMPLE
 	./migrate-mailbox.ps1
+     this will execute the script, you will be prompted for admin account and the email address of the mailbox you want to access
 .NOTES
     author      :   arnaud leresche
     version     :   0.1
 #>
 
 <#
-.INIT
+.INIT - load Exchange DLL to access EWS API
 #>
-write-host "======================= Mailbox Tool =============================" -ForegroundColor Yellow
+write-host "======================= Mailbox Cleaning Tool =============================" -ForegroundColor Yellow
 #Load Exchange web service DLL
 Add-Type -Path "C:\Program Files\Microsoft\Exchange\Web Services\2.2\Microsoft.Exchange.WebServices.dll"
-
+$FoldertoClean = "Inbox"
+$AdminEmail = "arnaud.leresche@alvean.onmicrosoft.com"
+$MailboxToImpersonate = "janine.wang@alvean.onmicrosoft.com"
 <#
 .Test Call back URL for Autodiscover redirect
 #>
@@ -32,21 +35,27 @@ $TestUrlCallback = {
 
 
 #set up EWS  connector
-write-host "Endpoint setup" -ForegroundColor Yellow
-$ews = New-Object Microsoft.Exchange.WebServices.Data.ExchangeService -ArgumentList "Exchange2007_SP1"
+write-host "Configuring EWS API access..." -ForegroundColor Yellow
+$ews = New-Object Microsoft.Exchange.WebServices.Data.ExchangeService -ArgumentList "Exchange2010"
 #set up credential
+write-host "Provide Admin credential" -ForegroundColor Yellow
 $cred = (Get-Credential).GetNetworkCredential()
 $ews.Credentials = New-Object System.Net.NetworkCredential -ArgumentList $cred.UserName, $cred.Password, $cred.Domain
-$ews.AutodiscoverUrl( ( Read-Host "Enter mailbox (email address)" ),$TestUrlCallback)
-
-write-host "EWS endpoint configured`nReading Source Endpoint..." -ForegroundColor Yellow
-#finding 10 first items in Inbox
+#Specify Email of admin account
+$ews.AutodiscoverUrl($AdminEmail,$TestUrlCallback)
+#select mailbox to clean
+$ews.ImpersonateUserId = New-Object Microsoft.Exchange.WebServices.Data.ImpersonatedUserId([Microsoft.Exchange.WebServices.Data.ConnectingIdType]::SmtpAddress,$MailboxToImpersonate);
+#bind mailbox to clean to service
+$InboxFolder= new-object Microsoft.Exchange.WebServices.Data.FolderId([Microsoft.Exchange.WebServices.Data.WellKnownFolderName]::Inbox,$ImpersonatedMailboxName)
+$Inbox = [Microsoft.Exchange.WebServices.Data.Folder]::Bind($ews,$InboxFolder)
+write-host "EWS endpoint configured`nPreparing to delete content..." -ForegroundColor Yellow
+#Lopping to retrieve items inside Inbox folder
 $results = $ews.FindItems(
-	"Inbox",
+	$FoldertoClean,
 	( New-Object Microsoft.Exchange.WebServices.Data.ItemView -ArgumentList 10 )
 )
-#Display Result
-$results.Items | ForEach-Object { $_.Subject }
-
+#Looping to delete all content inside Inbox 
+$results.Items | ForEach-Object {
+        write-host "deleting.... " $_.subject -ForegroundColor Magenta         
 		#[void]$_.Delete([Microsoft.Exchange.WebServices.Data.DeleteMode]::HardDelete)
-
+}

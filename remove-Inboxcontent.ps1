@@ -69,7 +69,7 @@ try {
                     [void]$item.Delete([Microsoft.Exchange.WebServices.Data.DeleteMode]::HardDelete)
                     $Deleted ++
 #Uncomment below to list before deleting
-					#Write-host $item.DateTimeReceived 
+					Write-host $item.DateTimeReceived 
                 } catch {
                     Write-warning "Unable to delete item, $($item.subject).  $($Error[0].Exception.Message)"
                 }

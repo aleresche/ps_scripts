@@ -1,11 +1,18 @@
 <#
 .SYNOPSIS
-   	Connect through EWS to migrate mailbox
+   	Connect through EWS and delete Inbox folder content of a mailbox
 .DESCRIPTION
    	Connect OWA, and retrieve content from a specific folder inside mailbox and hard delete them
 .EXAMPLE
-	./migrate-Mailbox.ps1
+	./delete-MailboxContent
+    
+    this will execute the script, you will be prompted for admin account and the email address of the mailbox you want to Access
+    ----------------------------------------------------------------------------------------------------------------------------
 
+    ./delete-MailboxContent -MailboxToImpersonate jon.poulet@xxx.onmicrosoft.com -TargetFolder Inbox
+
+    this will execute the script to delete content of inbox for Jon Poulet user
+    ----------------------------------------------------------------------------------------------------------------------------
 .NOTES
     author      :   arnaud leresche
     version     :   1.0
@@ -15,17 +22,19 @@
 ######################################################################################################################################################################################################
 Param(
     [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]  
-    [string] $MailboxToImpersonate  
+    [string] $MailboxToImpersonate,
+    [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]  
+    [string] $Targetfolder  
 )
 #######################################################################################################################################################################################################
 #Variables
 #######################################################################################################################################################################################################
 ## Define UPN of the Account that has impersonation rights
-$AccountWithImpersonationRights = "arnaud.leresche@bi4bilab1.onmicrosoft.com"
+$AccountWithImpersonationRights = "arnaud.leresche@alvean.onmicrosoft.com"
 ## Define DLL for exchange webservices
 $dllpath = "C:\Program Files\Microsoft\Exchange\Web Services\2.2\Microsoft.Exchange.WebServices.dll"
 ## Define Path for login cache file
-$inputCred = Join-Path $PWD.ToString()".\Cache_MM.xml" 
+$inputCred = Join-Path $PWD.ToString()".\Cache_DMC.xml" 
 #######################################################################################################################################################################################################
 #INIT
 #######################################################################################################################################################################################################
@@ -41,7 +50,7 @@ if ($Targetfolder -eq $null ){
     $FoldertoClean = "Inbox"
 }
 else {
-	$FoldertoClean = $Targetfolder
+    $FoldertoClean = $Targetfolder
 }
 ## Import EWS DLL
 Import-Module $dllpath
@@ -91,9 +100,9 @@ if ($Inbox.TotalCount > 10000 ){
 
 $results = $Inbox.FindItems(
 	$FoldertoClean,
-	( New-Object Microsoft.Exchange.WebServices.Data.ItemView -ArgumentList 10 )
+	( New-Object Microsoft.Exchange.WebServices.Data.ItemView -ArgumentList 10000 )
 )
 $results.Items | ForEach-Object {
-        write-host "deleting.... " $_.subject -ForegroundColor Magenta         
+        write-host "Moving..." $_.subject -ForegroundColor Magenta         
 		#[void]$_.Delete([Microsoft.Exchange.WebServices.Data.DeleteMode]::HardDelete)
 }
