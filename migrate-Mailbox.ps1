@@ -94,6 +94,6 @@ $results = $Inbox.FindItems(
 	( New-Object Microsoft.Exchange.WebServices.Data.ItemView -ArgumentList 10 )
 )
 $results.Items | ForEach-Object {
-        write-host "deleting.... " $_.subject -ForegroundColor Magenta         
+        write-host "moving.... " $_.subject -ForegroundColor Magenta         
 		#[void]$_.Delete([Microsoft.Exchange.WebServices.Data.DeleteMode]::HardDelete)
 }
