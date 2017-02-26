@@ -55,7 +55,7 @@ catch{Write-Host "Unable to load Windows.Markup.XamlReader. Some possible causes
 # Store Form Objects In PowerShell
 #===========================================================================
 
-$xaml.SelectNodes("//*[@Name]") | %{Set-Variable -Name ($_.Name) -Value $Form.FindName($_.Name)}
+$xaml.SelectNodes("//*[@Name]") | ForEach-Object {Set-Variable -Name ($_.Name) -Value $Form.FindName($_.Name)}
 
 #===========================================================================
 # Function to Check Login Cache
