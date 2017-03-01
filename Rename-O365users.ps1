@@ -26,7 +26,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="O365 Users Renaming tools v1.0" Height="789.62" Width="881.054">
     <Grid RenderTransformOrigin="0.491,0.553">
-        <Button Name="buttonConnect" Content="Connect" HorizontalAlignment="Left" Margin="759,33,0,0" VerticalAlignment="Top" Width="75"/>
+        <Button Name="buttonConnect" Content="Connect" HorizontalAlignment="Left" Margin="759,33,0,0" VerticalAlignment="Top" Width="75" IsEnabled="False"/>
         <Button Name="button" Content="Clear Cache" HorizontalAlignment="Left" Margin="275,30,0,0" VerticalAlignment="Top" Width="75"/>
         <Label Name="labelConectionStatus" Content="Connection Status :" HorizontalAlignment="Left" Margin="389,30,0,0" VerticalAlignment="Top"/>
         <Separator HorizontalAlignment="Left" Height="56" Margin="10,95,0,0" VerticalAlignment="Top" Width="852"/>
