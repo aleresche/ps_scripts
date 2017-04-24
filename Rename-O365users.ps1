@@ -26,8 +26,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="O365 Users Renaming tools v1.0" Height="789.62" Width="881.054">
     <Grid RenderTransformOrigin="0.491,0.553">
-        <Button Name="buttonConnect" Content="Connect" HorizontalAlignment="Left" Margin="759,33,0,0" VerticalAlignment="Top" Width="75" IsEnabled="False"/>
-        <Button Name="button" Content="Clear Cache" HorizontalAlignment="Left" Margin="275,30,0,0" VerticalAlignment="Top" Width="75"/>
+        <Button Name="buttonConnect" Content="Connect" HorizontalAlignment="Left" Margin="759,33,0,0" VerticalAlignment="Top" Width="75"/>
+        <Button Name="buttonClearCache" Content="Clear Cache" HorizontalAlignment="Left" Margin="275,30,0,0" VerticalAlignment="Top" Width="75"/>
         <Label Name="labelConectionStatus" Content="Connection Status :" HorizontalAlignment="Left" Margin="389,30,0,0" VerticalAlignment="Top"/>
         <Separator HorizontalAlignment="Left" Height="56" Margin="10,95,0,0" VerticalAlignment="Top" Width="852"/>
         <Label Name="labelConnectStats" Content="N/A" HorizontalAlignment="Left" Margin="506,30,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.501,-0.098"/>
@@ -86,14 +86,14 @@ function get-cache {
 #Cache checking 
 $AdmUsr = get-cache
 if($AdmUsr -eq $null){
-    $ListLogin.items.Add("No Login found in cache..")
+    $listBoxLogin.items.Add("No Login found in cache..")
 }
 #if Cache found
 else {
     $buttonConnect.isEnabled = $true
     foreach ($usr in $AdmUsr){
         if ($usr -ne ""){
-            $ListLogin.items.Add($usr)
+            $listBoxLogin.items.Add($usr)
         }
     }
 }
@@ -108,12 +108,12 @@ $buttonConnect.Add_Click({
         $inputCred = Join-Path $PWD.ToString()".\Cache_$guidSession.xml"  
         Get-Credential | Export-Clixml $inputCred
         $newUsr = get-cache
-        $ListLogin.items.Add($newUsr)
+        $listBoxLogin.items.Add($newUsr)
         $buttonConnect.isEnabled = $true
     }
     # otherwise cache exist, looping through them to find the one selected
     else {
-        $CurrentUsr = $listLogin.SelectedItem.ToString()
+        $CurrentUsr = $listBoxLogin.SelectedItem.ToString()
         $cacheXMLpath = get-childitem -Path .\ | Where-Object {$_ -like "Cache_*"}
         foreach ($xml in $cacheXMLpath.Name ){
                 if (get-cache $xml -eq $CurrentUsr){
@@ -135,36 +135,42 @@ $buttonConnect.Add_Click({
 $buttonConnect.Add_Click({
     #if XML file doesnt exist
     if(![System.IO.File]::Exists($inputCred)){
-        $listViewLogin.Items.Add("ERROR : XML file cache not found, please select another login or recreate cache")
+        $listBoxLogin.Items.Add("ERROR : XML file cache not found, please select another login or recreate cache")
         break
     }
     # Set this variable to the location of the file where credentials are cached
     $UsrCredential = Import-Clixml $inputCred
     #Creating PS Session
-    $labelStatus.Content = "Connecting.."
+    $labelConnectStats.Content = "Connecting.."
     $Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UsrCredential -Authentication Basic -AllowRedirection
     Import-PSSession $Session -AllowClobber |  out-null
     #Test if the session is available if yes display Connected + domain status
     if ( $(get-pssession).Name -eq "ExchangeOnline" -and $(get-pssession).Availability -eq "Available") {
-        $labelStatus.Content = "Connected" 
+        $labelConnectStats.Content = "Connected" 
     }
     $Form.Showintaskbar = $true
 })
 
-##############################################################################################################################################################
+#===========================================================================
 # Renaming different Emails (including SIP)
-##############################################################################################################################################################
+#===========================================================================
 Function renameEmails {
 
 }
-##############################################################################################################################################################
+#===========================================================================
 # Renaming User Principal Name (UPN)
-##############################################################################################################################################################
+#===========================================================================
 Function renameUPN {
-
+    
 }
 
-
+#===========================================================================
+# Connect Button Clear Cache
+#===========================================================================
+$buttonClearCache.Add_Click({
+    get-childitem -Path .\ | Where-Object {$_ -like "Cache_*"} | Remove-Item $_
+    $listBoxLogin.items.clear();
+})
 #===========================================================================
 # Shows the form
 #===========================================================================
