@@ -1,4 +1,4 @@
-# ps_scripts aleresche scripting repo
+# ps_scripts
 
 ## Powershell
 Repo for custom script
