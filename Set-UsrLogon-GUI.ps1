@@ -42,7 +42,7 @@ function Connect-Exch{
     #Connecting to Azure AD & Exchange Online
     write-host "Connecting..." -ForegroundColor Yellow
     #connect-msolservice -credential $UserCredential
-    $Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UserCredential -Authentication Basic -AllowRedirection
+    $Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UsrCredential  -Authentication Basic -AllowRedirection
     Import-PSSession $Session -AllowClobber |  out-null
     write-host "Connected !" -ForegroundColor Yellow
 }
