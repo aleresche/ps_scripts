@@ -21,7 +21,7 @@ Param(
 #Variables
 #######################################################################################################################################################################################################
 ## Define UPN of the Account that has impersonation rights
-$AccountWithImpersonationRights = "arnaud.leresche@bi4bilab1.onmicrosoft.com"
+$AccountWithImpersonationRights = "arnaud.leresche@b-i.com"
 ## Define DLL for exchange webservices
 $dllpath = "C:\Program Files\Microsoft\Exchange\Web Services\2.2\Microsoft.Exchange.WebServices.dll"
 ## Define Path for login cache file
@@ -89,6 +89,7 @@ if ($Inbox.TotalCount > 10000 ){
     exit
 }
 
+<#
 $results = $Inbox.FindItems(
 	$FoldertoClean,
 	( New-Object Microsoft.Exchange.WebServices.Data.ItemView -ArgumentList 10 )
@@ -96,4 +97,4 @@ $results = $Inbox.FindItems(
 $results.Items | ForEach-Object {
         write-host "moving.... " $_.subject -ForegroundColor Magenta         
 		#[void]$_.Delete([Microsoft.Exchange.WebServices.Data.DeleteMode]::HardDelete)
-}
+}#>
