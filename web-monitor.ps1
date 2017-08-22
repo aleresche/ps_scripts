@@ -14,6 +14,7 @@
 # Init Runspace + GUI
 #=====================================================================================================================================================================================
 # Create synced RunSpace
+Add-Type -AssemblyName PresentationCore, PresentationFramework
 $syncHash = [hashtable]::Synchronized(@{})
 $newRunspace =[runspacefactory]::CreateRunspace()
 $newRunspace.ApartmentState = "STA"
@@ -56,32 +57,73 @@ Title="Cloud Solutions -  PS Monitoring Tools" Height="507.115" Width="919.128">
 
 $reader=(New-Object System.Xml.XmlNodeReader $xaml)
 $syncHash.Window=[Windows.Markup.XamlReader]::Load( $reader )
-$xaml.SelectNodes("//*[@Name]") | ForEach-Object {Set-Variable -Name ($_.Name) -Value $syncHash.Window.FindName($_.Name)}
+#=====================================================================================================================================================================================
+# XAML objects
+#=====================================================================================================================================================================================
+$xaml.SelectNodes("//*[@*[contains(translate(name(.),'n','N'),'Name')]]") | ForEach-Object {$synchash.Add($_.Name,$synchash.Window.FindName($_.Name))}
+#=====================================================================================================================================================================================
+$syncHash.WPFbtnAddUrl.Add_click({
+    $count++
+    if ($count -lt 3) {
+        add-url
+    }
+})
 $syncHash.Window.ShowDialog() | Out-Null
 $syncHash.Error = $Error
 })
-# start runspace and invoke GUI
+
+#=====================================================================================================================================================================================
+# Start AppScript
+#=====================================================================================================================================================================================
 $psCmd.Runspace = $newRunspace
 $data = $psCmd.BeginInvoke()
-
-#=====================================================================================================================================================================================
-# Function to test websites availablility
 #=====================================================================================================================================================================================
 
+
+#=====================================================================================================================================================================================
+# Buttons Add clicks Call
+#=====================================================================================================================================================================================
+$syncHash.WPFbtnAddUrl.Dispatcher.invoke([action]{$syncHash.WPFbtnAddUrl.Add_click({add-url})},"Normal")
+$syncHash.WPFbtnAddUrl.Dispatcher.invoke([action]{$syncHash.WPFbtnAddUrl.Add_click({test-urls})},"Normal")
 
 #=====================================================================================================================================================================================
 # Function to add Url into form
 #=====================================================================================================================================================================================
-
-
-function add-url ($url) {
+function add-url {
+    
+    Add-Type -AssemblyName Microsoft.VisualBasic
+    $url = [Microsoft.VisualBasic.Interaction]::InputBox('Enter a website url to monitor', 'url',"")
     if ($url -ne $null) {
-       $syncHash.WPFbtnAddUrl.Dispatcher.invoke([action]{$syncHash.WPFbtnAddUrl.Content='TEST!'},"Normal")
-    } 
+        #$syncHash.WPFUrlsList.items.add($url)
+        $syncHash.WPFUrlsList.Dispatcher.invoke([action]{$syncHash.WPFUrlsList.items.add($url)},"Normal")
+    }
 }
 
 
-
-add-url("test")
+#=====================================================================================================================================================================================
+# Function to test urls
+#=====================================================================================================================================================================================
+function test-urls {
+    $path = $syncHash.WPFLogPath.Text
+    for ($i=0;$i -le 2;$i++){
+        foreach ($url in $syncHash.WPFUrlsList.items) {
+            if ($url -ne $null){
+                $Time = Measure-Command { $httpReq = Invoke-WebRequest -uri $url -ErrorAction SilentlyContinue } 
+                $date=Get-Date
+                if ($httpReq.StatusCode -eq "200"){
+                    $outputOK = "$date :: $url is responding correctly :: OK HTTP "+$httpReq.StatusCode+" in "+$Time.TotalSeconds+" second response time"
+                    $syncHash.WPFConsole.items.add($outputOK)
+                    $outputOK | out-file -filepath $path\$url.log -Encoding default -Append
+                }
+                if ($httpReq.StatusCode -eq $null){
+                    $outputNOK =  "$date ::  $url not responding WARNING :: ERROR HTTP "+$httpReq.StatusCode+" in"+$Time.TotalSeconds+" second response time"
+                    $syncHash.WPFConsole.items.add($outputNOK) 
+                    $outputNOK | out-file -filepath $path\$url.log -Encoding default -Append
+                }
+            }
+        }
+        start-sleep -s 59 # wait in seconds before looping again 
+    }
+}
 
 
