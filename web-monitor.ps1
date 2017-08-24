@@ -13,8 +13,8 @@
 #=====================================================================================================================================================================================
 # Init Runspace + XAML GUI
 #=====================================================================================================================================================================================
-# Create synced RunSpace
 Add-Type -AssemblyName PresentationCore, PresentationFramework
+# Create synced RunSpace
 $Global:syncHash = [hashtable]::Synchronized(@{})
 $newRunspace =[runspacefactory]::CreateRunspace()
 $newRunspace.ApartmentState = "STA"
@@ -147,12 +147,12 @@ $syncHash.WPFbtnCheck.Add_click({
                     if ($httpReq.StatusCode -eq "200"){
                         $outputOK = "$date :: $url is responding correctly :: OK HTTP "+$httpReq.StatusCode+" in "+$Time.TotalSeconds+" second response time"
                         $syncHash.WPFConsole.Dispatcher.invoke([action]{$syncHash.WPFConsole.items.add($outputOK)},"Normal")
-                        $outputOK | out-file -filepath $path\$url.log -Encoding default -Append
+                        $outputOK | out-file -filepath "$path\$url.log" -Encoding default -Append
                     }
                     if ($httpReq.StatusCode -eq $null){
                         $outputNOK =  "$date ::  $url not responding WARNING :: ERROR HTTP "+$httpReq.StatusCode+" in"+$Time.TotalSeconds+" second response time"
                         $syncHash.WPFConsole.Dispatcher.invoke([action]{$syncHash.WPFConsole.items.add($outputNOK)},"Normal")
-                        $outputNOK | out-file -filepath $path\$url.log -Encoding default -Append
+                        $outputNOK | out-file -filepath "$path\$url.log" -Encoding default -Append
                     }
                 }
             }
