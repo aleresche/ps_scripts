@@ -132,13 +132,12 @@ $syncHash.WPFbtnAddUrl.Add_click({
 #=====================================================================================================================================================================================
 $syncHash.WPFbtnCheck.Add_click({
     #Thread Creation
-    $Global:urlsCheckHash = [hashtable]::Synchronized(@{})
-    $urlsCheckRunspace =[runspacefactory]::CreateRunspace()
-    $urlsCheckRunspace.ApartmentState = "STA"
-    $urlsCheckRunspace.ThreadOptions = "ReuseThread"          
-    $urlsCheckRunspace.Open()
-    $urlsCheckRunspace.SessionStateProxy.SetVariable("urlsCheckHash",$urlsCheckHash) 
-    $PowerShellCheckUrls = [PowerShell]::Create().AddScript({
+    $newRunspace =[runspacefactory]::CreateRunspace()
+    $newRunspace.ApartmentState = "STA"
+    $newRunspace.ThreadOptions = "ReuseThread"          
+    $newRunspace.Open()
+    $newRunspace.SessionStateProxy.SetVariable("SyncHash",$SyncHash) 
+    $PowerShell = [PowerShell]::Create().AddScript({
         $path = $syncHash.WPFLogPath.Text
         for ($i=0;$i -le 1440;$i++){
             foreach ($url in $syncHash.WPFUrlsList.items) {
@@ -160,8 +159,13 @@ $syncHash.WPFbtnCheck.Add_click({
             start-sleep -s 59 # wait in seconds before looping again 
         }
     })
-    $PowerShellCheckUrls.PowerShell.Runspace = $urlsCheckRunspace
-    $PowerShellCheckUrls.Thread = $PowerShellCheckUrls.PowerShell.BeginInvoke()  
+    $PowerShell.Runspace = $newRunspace
+    [void]$Jobs.Add((
+        [pscustomobject]@{
+            PowerShell = $PowerShell
+            Runspace = $PowerShell.BeginInvoke()
+        }
+    ))
 })
 #=====================================================================================================================================================================================
 
@@ -170,7 +174,7 @@ $syncHash.WPFbtnCheck.Add_click({
 #=====================================================================================================================================================================================
 $syncHash.WPFbtnStop.Add_click({
     #kill urls checks
-    $PowerShellCheckUrls.powershell.EndInvoke($PowerShellCheckUrls.runspace)
+    $jobs.powershell.EndInvoke($jobs.runspace)
 })
 
 #=====================================================================================================================================================================================
