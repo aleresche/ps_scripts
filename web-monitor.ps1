@@ -132,12 +132,12 @@ $syncHash.WPFbtnAddUrl.Add_click({
 #=====================================================================================================================================================================================
 $syncHash.WPFbtnCheck.Add_click({
     #Thread Creation
-    $newRunspace =[runspacefactory]::CreateRunspace()
-    $newRunspace.ApartmentState = "STA"
-    $newRunspace.ThreadOptions = "ReuseThread"          
-    $newRunspace.Open()
-    $newRunspace.SessionStateProxy.SetVariable("SyncHash",$SyncHash) 
-    $PowerShell = [PowerShell]::Create().AddScript({
+    $Script:checkRunspace =[runspacefactory]::CreateRunspace()
+    $checkRunspace.ApartmentState = "STA"
+    $checkRunspace.ThreadOptions = "ReuseThread"         
+    $checkRunspace.Open()
+    $checkRunspace.SessionStateProxy.SetVariable("syncHash",$syncHash)
+    $PowerShellcheck = [PowerShell]::Create().AddScript({
         $path = $syncHash.WPFLogPath.Text
         for ($i=0;$i -le 1440;$i++){
             foreach ($url in $syncHash.WPFUrlsList.items) {
@@ -159,13 +159,8 @@ $syncHash.WPFbtnCheck.Add_click({
             start-sleep -s 59 # wait in seconds before looping again 
         }
     })
-    $PowerShell.Runspace = $newRunspace
-    [void]$Jobs.Add((
-        [pscustomobject]@{
-            PowerShell = $PowerShell
-            Runspace = $PowerShell.BeginInvoke()
-        }
-    ))
+    $PowerShellcheck.Runspace = $checkRunspace
+    $PowerShellcheck.Thread = $PowerShellcheck.BeginInvoke()  
 })
 #=====================================================================================================================================================================================
 
@@ -174,7 +169,7 @@ $syncHash.WPFbtnCheck.Add_click({
 #=====================================================================================================================================================================================
 $syncHash.WPFbtnStop.Add_click({
     #kill urls checks
-    $jobs.powershell.EndInvoke($jobs.runspace)
+    $checkRunspace.Close()
 })
 
 #=====================================================================================================================================================================================
