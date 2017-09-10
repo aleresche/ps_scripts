@@ -37,7 +37,7 @@ Title="Cloud Solutions -  PS Monitoring Tools" Height="507.115" Width="919.128">
     </ListView.View>
 </ListView>
 <Label Name="WPFtxtUrls" Content="Website Urls to check :" HorizontalAlignment="Left" Margin="10,11,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.417,-0.248"/>
-<TextBox Name="WPFLogPath" HorizontalAlignment="Left" Height="23" Margin="776,157,0,0" TextWrapping="Wrap" Text="c:\temp" VerticalAlignment="Top" Width="120"/>
+<TextBox Name="TextBox" HorizontalAlignment="Left" Height="23" Margin="776,157,0,0" TextWrapping="Wrap" Text="uselesss" VerticalAlignment="Top" Width="120"/>
 <Label Name="WPFtxtPath" Content="Path for log file :" HorizontalAlignment="Left" Margin="677,156,0,0" VerticalAlignment="Top"/>
 <Button Name="WPFbtnCheck" Content="Start check" HorizontalAlignment="Left" Margin="488,131,0,0" VerticalAlignment="Top" Width="75"/>
 <Button Name="WPFbtnStop" Content="Stop" HorizontalAlignment="Left" Margin="488,156,0,0" VerticalAlignment="Top" Width="75"/>
@@ -126,7 +126,6 @@ $syncHash.WPFbtnAddUrl.Add_click({
     ))
 })
 #=====================================================================================================================================================================================
-
 #=====================================================================================================================================================================================
 # Click Event check Url
 #=====================================================================================================================================================================================
@@ -138,7 +137,7 @@ $syncHash.WPFbtnCheck.Add_click({
     $checkRunspace.Open()
     $checkRunspace.SessionStateProxy.SetVariable("syncHash",$syncHash)
     $PowerShellcheck = [PowerShell]::Create().AddScript({
-        $path = $syncHash.WPFLogPath.Text
+        $Path = $syncHash.TextBox.Text
         for ($i=0;$i -le 1440;$i++){
             foreach ($url in $syncHash.WPFUrlsList.items) {
                 if ($url -ne $null){
@@ -147,16 +146,16 @@ $syncHash.WPFbtnCheck.Add_click({
                     if ($httpReq.StatusCode -eq "200"){
                         $outputOK = "$date :: $url is responding correctly :: OK HTTP "+$httpReq.StatusCode+" in "+$Time.TotalSeconds+" second response time"
                         $syncHash.WPFConsole.Dispatcher.invoke([action]{$syncHash.WPFConsole.items.add($outputOK)},"Normal")
-                        $outputOK | out-file -filepath "$path\$url.log" -Encoding default -Append
+                        $outputOK | out-file -filepath "$url.log"  -Encoding default -Append
                     }
                     if ($httpReq.StatusCode -eq $null){
                         $outputNOK =  "$date ::  $url not responding WARNING :: ERROR HTTP "+$httpReq.StatusCode+" in"+$Time.TotalSeconds+" second response time"
                         $syncHash.WPFConsole.Dispatcher.invoke([action]{$syncHash.WPFConsole.items.add($outputNOK)},"Normal")
-                        $outputNOK | out-file -filepath "$path\$url.log" -Encoding default -Append
+                        $outputNOK | out-file -filepath "$url.log"  -Encoding default -Append
                     }
                 }
             }
-            start-sleep -s 59 # wait in seconds before looping again 
+            start-sleep -s 59 # wait in seconds before looping aagain 
         }
     })
     $PowerShellcheck.Runspace = $checkRunspace
