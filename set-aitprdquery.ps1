@@ -9,3 +9,19 @@
     Version 0.1
     Written by Arnaud Leresche
 #>
+
+#Parameters
+Param(
+    [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]  
+    [string] $Username
+)
+
+
+if ((Get-Command "Invoke-Sqlcmd") -eq $null) {
+	Write-host "Module MS SQL is missing..." -ForegroundColor Yellow
+	Install-Module -Name SqlServer
+}
+
+
+# Invoke query on HuB PRD
+Invoke-Sqlcmd -InputFile $QueryFilePath  -ServerInstance "10.7.12.168" | Out-File -filePath "$PWD\resultSQLCmd.rpt" 
