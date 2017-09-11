@@ -1,15 +1,15 @@
 <#
 .Synopsis
-   	Powershell Tools that monitor specific urls configured in the app for 24/48 hours with graphical interface
+   	   Powershell Tools that monitor specific urls configured in the app for 24 hours with graphical interface
 .DESCRIPTION
-       powershell script embedded in a xaml GUI to monitor different urls, 
+       script embedded in a xaml GUI to monitor different urls, 
        logs are stored by url name in the same folder as this script 
 .EXAMPLE
-	./monitoringtool.ps1
+	   ./monitoringtool.ps1
 .NOTES
-    Version 2.0
-    adding multithreading for UI and script interaction 
-    Written by Arnaud Leresche
+        Version 2.0.a
+        
+        Written by Arnaud Leresche
 #>
 #=====================================================================================================================================================================================
 # Init Runspace + XAML GUI
@@ -49,12 +49,6 @@ Title="Cloud Solutions -  PS Monitoring Tools" Height="507.115" Width="592.898">
 </ListView>
 <Label Name="WPFtxtConsole" Content="Console Output :" HorizontalAlignment="Left" Margin="10,201,0,0" VerticalAlignment="Top"/>
 <Button Name="WPFbtnAddUrl" Content="Add Url" HorizontalAlignment="Left" Margin="488,42,0,0" VerticalAlignment="Top" Width="75"/>
-<ComboBox Name="TimerBox" HorizontalAlignment="Left" Margin="515,75,0,0" VerticalAlignment="Top" Width="48" RenderTransformOrigin="0.458,-0.607" SelectedIndex="0">
-    <ComboBoxItem Content="24H" HorizontalAlignment="Left" Width="92"/>
-    <ComboBoxItem Content="48H" HorizontalAlignment="Left" Width="92"/>
-</ComboBox>
-<Label Name="LabelTTL" Content="TTL:" HorizontalAlignment="Left" Margin="483,71,0,0" VerticalAlignment="Top" Width="49" Height="26"/>
-
 </Grid>
 </Window>
 "@
@@ -67,7 +61,7 @@ $xaml.SelectNodes("//*[@*[contains(translate(name(.),'n','N'),'Name')]]") | ForE
 #=====================================================================================================================================================================================
 
 #=====================================================================================================================================================================================
-# region Background runspace to clean up jobs
+# Background runspace to clean up jobs
 #=====================================================================================================================================================================================
 $Script:JobCleanup = [hashtable]::Synchronized(@{})
 $Script:Jobs = [system.collections.arraylist]::Synchronized((New-Object System.Collections.ArrayList))
@@ -79,7 +73,7 @@ $newRunspace.Open()
 $newRunspace.SessionStateProxy.SetVariable("jobCleanup",$jobCleanup)     
 $newRunspace.SessionStateProxy.SetVariable("jobs",$jobs) 
 $jobCleanup.PowerShell = [PowerShell]::Create().AddScript({
-    #Routine to handle completed runspaces
+    # Routine to handle completed runspaces
     Do {    
         Foreach($runspace in $jobs) {            
             If ($runspace.Runspace.isCompleted) {
@@ -89,7 +83,7 @@ $jobCleanup.PowerShell = [PowerShell]::Create().AddScript({
                 $runspace.powershell = $null               
             } 
         }
-        #Clean out unused runspace jobs
+        # Clean out unused runspace jobs
         $temphash = $jobs.clone()
         $temphash | Where-Object {
             $_.runspace -eq $Null
@@ -101,14 +95,14 @@ $jobCleanup.PowerShell = [PowerShell]::Create().AddScript({
 })
 $jobCleanup.PowerShell.Runspace = $newRunspace
 $jobCleanup.Thread = $jobCleanup.PowerShell.BeginInvoke()  
-#endregion Background runspace to clean up jobs
+# endregion Background runspace to clean up jobs
 #=====================================================================================================================================================================================
 
 #=====================================================================================================================================================================================
 # Click Event Add Url
 #=====================================================================================================================================================================================
 $syncHash.WPFbtnAddUrl.Add_click({
-    #Thread Creation
+    # Thread Creation
     $newRunspace =[runspacefactory]::CreateRunspace()
     $newRunspace.ApartmentState = "STA"
     $newRunspace.ThreadOptions = "ReuseThread"          
@@ -130,35 +124,31 @@ $syncHash.WPFbtnAddUrl.Add_click({
     ))
 })
 #=====================================================================================================================================================================================
+
 #=====================================================================================================================================================================================
 # Click Event check Url
 #=====================================================================================================================================================================================
 $syncHash.WPFbtnCheck.Add_click({
-    #Thread Creation
+    # Thread Creation
     $Script:checkRunspace =[runspacefactory]::CreateRunspace()
     $checkRunspace.ApartmentState = "STA"
     $checkRunspace.ThreadOptions = "ReuseThread"         
     $checkRunspace.Open()
     $checkRunspace.SessionStateProxy.SetVariable("syncHash",$syncHash)
     $PowerShellcheck = [PowerShell]::Create().AddScript({
-        if ($syncHash.TimerBox.SelectedItem -eq "24H"){
-            $timer = 1440
-        }
-        elseif ($syncHash.TimerBox.SelectedItem -eq "48H") {
-            $timer = 2880
-        }
-        for ($i=0;$i -le $timer;$i++){
+        # Web request routing
+        for ($i=0;$i -le 1440;$i++){
             foreach ($url in $syncHash.WPFUrlsList.items) {
                 if ($url -ne $null){
                     $Time = Measure-Command { $httpReq = Invoke-WebRequest -uri $url -ErrorAction SilentlyContinue } 
                     $date=Get-Date
                     if ($httpReq.StatusCode -eq "200"){
-                        $outputOK = "$date :: $url is responding correctly :: OK HTTP "+$httpReq.StatusCode+" in "+$Time.TotalSeconds+" second response time"
+                        $outputOK = "$date :: OK HTTP $url :: "+$httpReq.StatusCode+" in "+$Time.TotalSeconds+" second"
                         $syncHash.WPFConsole.Dispatcher.invoke([action]{$syncHash.WPFConsole.items.add($outputOK)},"Normal")
                         $outputOK | out-file -filepath "$url.log"  -Encoding default -Append
                     }
                     if ($httpReq.StatusCode -eq $null){
-                        $outputNOK =  "$date ::  $url not responding WARNING :: ERROR HTTP "+$httpReq.StatusCode+" in"+$Time.TotalSeconds+" second response time"
+                        $outputNOK =  "$date :: ERROR HTTP $url :: "+$httpReq.StatusCode+" in"+$Time.TotalSeconds+" second"
                         $syncHash.WPFConsole.Dispatcher.invoke([action]{$syncHash.WPFConsole.items.add($outputNOK)},"Normal")
                         $outputNOK | out-file -filepath "$url.log"  -Encoding default -Append
                     }
