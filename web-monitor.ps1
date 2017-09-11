@@ -27,7 +27,7 @@ $psCmd = [PowerShell]::Create().AddScript({
 <Window
 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-Title="Cloud Solutions -  PS Monitoring Tools" Height="507.115" Width="919.128">
+Title="Cloud Solutions -  PS Monitoring Tools" Height="507.115" Width="592.898">
 <Grid>
 <ListView Name="WPFUrlsList" HorizontalAlignment="Left" Height="138" Margin="10,42,0,0" VerticalAlignment="Top" Width="463">
     <ListView.View>
@@ -37,11 +37,9 @@ Title="Cloud Solutions -  PS Monitoring Tools" Height="507.115" Width="919.128">
     </ListView.View>
 </ListView>
 <Label Name="WPFtxtUrls" Content="Website Urls to check :" HorizontalAlignment="Left" Margin="10,11,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.417,-0.248"/>
-<TextBox Name="TextBox" HorizontalAlignment="Left" Height="23" Margin="776,157,0,0" TextWrapping="Wrap" Text="uselesss" VerticalAlignment="Top" Width="120"/>
-<Label Name="WPFtxtPath" Content="Path for log file :" HorizontalAlignment="Left" Margin="677,156,0,0" VerticalAlignment="Top"/>
 <Button Name="WPFbtnCheck" Content="Start check" HorizontalAlignment="Left" Margin="488,131,0,0" VerticalAlignment="Top" Width="75"/>
 <Button Name="WPFbtnStop" Content="Stop" HorizontalAlignment="Left" Margin="488,156,0,0" VerticalAlignment="Top" Width="75"/>
-<ListView Name="WPFConsole" HorizontalAlignment="Left" Height="223" Margin="10,223,0,0" VerticalAlignment="Top" Width="886">
+<ListView Name="WPFConsole" HorizontalAlignment="Left" Height="223" Margin="10,223,0,0" VerticalAlignment="Top" Width="553">
     <ListView.View>
         <GridView>
             <GridViewColumn/>
@@ -50,6 +48,11 @@ Title="Cloud Solutions -  PS Monitoring Tools" Height="507.115" Width="919.128">
 </ListView>
 <Label Name="WPFtxtConsole" Content="Console Output :" HorizontalAlignment="Left" Margin="10,201,0,0" VerticalAlignment="Top"/>
 <Button Name="WPFbtnAddUrl" Content="Add Url" HorizontalAlignment="Left" Margin="488,42,0,0" VerticalAlignment="Top" Width="75"/>
+<ComboBox Name="TimerBox" HorizontalAlignment="Left" Margin="515,75,0,0" VerticalAlignment="Top" Width="48" RenderTransformOrigin="0.458,-0.607" SelectedIndex="0">
+    <ComboBoxItem Content="24H" HorizontalAlignment="Left" Width="92"/>
+    <ComboBoxItem Content="48H" HorizontalAlignment="Left" Width="92"/>
+</ComboBox>
+<Label Name="LabelTTL" Content="TTL:" HorizontalAlignment="Left" Margin="483,71,0,0" VerticalAlignment="Top" Width="49" Height="26"/>
 
 </Grid>
 </Window>
@@ -137,8 +140,13 @@ $syncHash.WPFbtnCheck.Add_click({
     $checkRunspace.Open()
     $checkRunspace.SessionStateProxy.SetVariable("syncHash",$syncHash)
     $PowerShellcheck = [PowerShell]::Create().AddScript({
-        $Path = $syncHash.TextBox.Text
-        for ($i=0;$i -le 1440;$i++){
+        if ($syncHash.TimerBox.SelectedItem -eq "24H"){
+            $timer = 1440
+        }
+        elseif ($syncHash.TimerBox.SelectedItem -eq "48H") {
+            $timer = 2880
+        }
+        for ($i=0;$i -le $timer;$i++){
             foreach ($url in $syncHash.WPFUrlsList.items) {
                 if ($url -ne $null){
                     $Time = Measure-Command { $httpReq = Invoke-WebRequest -uri $url -ErrorAction SilentlyContinue } 
