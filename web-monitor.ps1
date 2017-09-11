@@ -1,8 +1,9 @@
 <#
 .Synopsis
-   	Powershell Tools that monitor specific urls configured in the app for 24 hours
+   	Powershell Tools that monitor specific urls configured in the app for 24/48 hours with graphical interface
 .DESCRIPTION
-   	powershell script embedded in a xaml GUI to monitor different urls 
+       powershell script embedded in a xaml GUI to monitor different urls, 
+       logs are stored by url name in the same folder as this script 
 .EXAMPLE
 	./monitoringtool.ps1
 .NOTES
