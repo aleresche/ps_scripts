@@ -25,9 +25,13 @@ Param(
 # Remove all existing Powershell sessions  
 Get-PSSession | Remove-PSSession
 
+# Variables
+$dbServer = "10.7.12.62"
+$webServer = "10.7.12.168"
+
 # Test if SQL pshell module is present, install it if not the case
 if ((Get-Command "Invoke-Sqlcmd") -eq $null) {
-	Write-host "Module MS SQL is missing..." -ForegroundColor Yellow
+	Write-host "Module MS SQL is missing..." -ForegroundColor Red
 	Install-Module -Name SqlServer
 }
 
@@ -39,11 +43,12 @@ if(![System.IO.File]::Exists($releasefile)){
 
 #No cache found asking for Credential
 if(![System.IO.File]::Exists($inputCred)){
-    write-host "No Credential Found, creating cache..."
+	write-host "No Credential Found, creating cache..." -ForegroundColor Red
+	write-host "Please provide Credential :" -ForegroundColor Yellow
     $inputCred = Join-Path $PWD.ToString()".\Cache_login.xml"  
     Get-Credential | Export-Clixml $inputCred
 }
-# Set this variable to the location of the file where credentials are cached
+# loading XML credential file
 $UsrCredential = Import-Clixml $inputCred
 
 # Uncompress Zip file for release
@@ -95,7 +100,7 @@ if ($input -eq "2"){
 		$queryname = $_.Name
 		# Invoke query on Hub PRD
 		Invoke-Sqlcmd -InputFile $deployedrelease"\01 - Database\Configuration\"$queryname`
-		-ServerInstance "10.7.12.168"-Username $UsrCredential.Username -Password $UsrCredential.GetNetworkCredential().password | Out-File -filePath $PWD.Path"\result_$queryname.rpt" 
+		-ServerInstance $dbServer -Username $UsrCredential.Username -Password $UsrCredential.GetNetworkCredential().password | Out-File -filePath $PWD.Path"\result_$queryname.rpt" 
 	}
 	write-host "SQL script deployed, you can check results in the rpt files"
 	Show-MenuConnect
@@ -107,12 +112,19 @@ if ($input -eq "2"){
 # Services Modification
 #=========================================================================================================================================================================
 #
-
+$WebServerSession = New-PSSession -Name "WebAIT" -ComputerName $webServer -Credential $UsrCredential
+Get-ChildItem -Path $deployedrelease"\02 - Web services\" | ForEach-Object {
+	Copy-Item -FromSession $WebServerSession -Path $deployedrelease"\02 - Web services\"$_.Name -Destination "D:\Blue Infinity\Web Services\"$_.Name
+}
 #=========================================================================================================================================================================
 
 #=========================================================================================================================================================================
 # Web Content Modification
 #=========================================================================================================================================================================
 #
+$WebServerSession = New-PSSession -Name "WebAIT" -ComputerName $webServer -Credential $UsrCredential
+Get-ChildItem -Path $deployedrelease"\03 - Web Content\" | ForEach-Object {
+	Copy-Item -FromSession $WebServerSession -Path $deployedrelease"\01 - Web services\"$_.Name -Destination "D:\inetpub\wwwroot\"$_.Name
+}
 
 #=========================================================================================================================================================================
