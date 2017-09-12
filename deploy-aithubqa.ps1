@@ -95,7 +95,7 @@ until ($input -eq 'q' -or $input -eq '1'-or $input -eq '2'-or $input -eq '3')
 # Database Modification
 #=========================================================================================================================================================================
 # Loop through all SQL script in Configuration repo
-if ($input -eq "2"){
+if ($input -eq "1"){
 	Get-ChildItem -Path $deployedrelease"\01 - Database\Configuration\" | ForEach-Object {
 		$queryname = $_.Name
 		# Invoke query on Hub PRD
@@ -107,14 +107,17 @@ if ($input -eq "2"){
 }
 
 #=========================================================================================================================================================================
-
+$WebServerSession = New-PSSession -Name "WebAIT" -ComputerName $webServer -Credential $UsrCredential
 #=========================================================================================================================================================================
 # Services Modification
 #=========================================================================================================================================================================
 #
-$WebServerSession = New-PSSession -Name "WebAIT" -ComputerName $webServer -Credential $UsrCredential
-Get-ChildItem -Path $deployedrelease"\02 - Web services\" | ForEach-Object {
-	Copy-Item -FromSession $WebServerSession -Path $deployedrelease"\02 - Web services\"$_.Name -Destination "D:\Blue Infinity\Web Services\"$_.Name
+if ($input -eq "2"){
+	Get-ChildItem -Path $deployedrelease"\02 - Web services\" | ForEach-Object {
+		Copy-Item -FromSession $WebServerSession -Path $deployedrelease"\02 - Web services\"$_.Name -Destination "D:\Blue Infinity\Web Services\"$_.Name
+	}
+	write-host "Web Services deployed" -ForegroundColor Green
+	Show-MenuConnect
 }
 #=========================================================================================================================================================================
 
@@ -122,9 +125,17 @@ Get-ChildItem -Path $deployedrelease"\02 - Web services\" | ForEach-Object {
 # Web Content Modification
 #=========================================================================================================================================================================
 #
-$WebServerSession = New-PSSession -Name "WebAIT" -ComputerName $webServer -Credential $UsrCredential
-Get-ChildItem -Path $deployedrelease"\03 - Web Content\" | ForEach-Object {
-	Copy-Item -FromSession $WebServerSession -Path $deployedrelease"\01 - Web services\"$_.Name -Destination "D:\inetpub\wwwroot\"$_.Name
+if ($input -eq "3"){
+	Get-ChildItem -Path $deployedrelease"\03 - Web Content\" | ForEach-Object {
+		Copy-Item -FromSession $WebServerSession -Path $deployedrelease"\01 - Web services\"$_.Name -Destination "D:\inetpub\wwwroot\"$_.Name
+	}
+	write-host "Web Content deployed" -ForegroundColor Green
+	Show-MenuConnect
 }
+#=========================================================================================================================================================================
 
+#=========================================================================================================================================================================
+# Cleaning sessions
+write-host "Deployment Completed" -ForegroundColor Green
+Get-PSSession | Remove-PSSession
 #=========================================================================================================================================================================
