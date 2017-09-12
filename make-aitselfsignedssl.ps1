@@ -19,10 +19,10 @@ Param(
     [string] $passwd
 )
 # Creating CA Root
-$caroot = New-SelfSignedCertificate -certstorelocation cert:\localmachine\my -dnsname "AIT Local Certificate Authority" -KeyusageProperty All -KeyUsage CertSign, CRLSign, DigitalSiganture
+$caroot = New-SelfSignedCertificate -certstorelocation "cert:\localmachine\my" -dnsname "AIT Local Certificate Authority" -KeyusageProperty All -KeyUsage CertSign, CRLSign, DigitalSiganture
 # Creating Client Cert
 $certpath = 'cert:\localmachine\my\'
-$cert = New-SelfSignedCertificate -Subject "*.testing.local"  -DnsName "*.testing.local, testing.local" -CertStoreLocation $certpath  -Signer $caroot
+$cert = New-SelfSignedCertificate -Subject "CN=AIT Certificate Authority"  -CertStoreLocation $certpath  -Signer $caroot
 # Export it to PFX file
 $password = ConvertTo-SecureString -String $passwd -Force -AsPlainText
 $certpath = $path + $cert.Thumbprint
