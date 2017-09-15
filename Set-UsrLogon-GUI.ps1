@@ -23,7 +23,7 @@ if (([string]::IsNullOrEmpty($Username) -eq $false) -and ([string]::IsNullOrEmpt
 } 
 else { 
     #Build credentials object
-    write-host "Requesting credential..."  -ForegroundColor Yellow
+    write-host "Requesting credential..."  -ForegroundColor Cyan
     $UserCredential  = Get-Credential
 }
 #>
@@ -40,11 +40,11 @@ function Connect-Exch{
     # Set this variable to the location of the file where credentials are cached
     $UsrCredential = Import-Clixml $inputCred
     #Connecting to Azure AD & Exchange Online
-    write-host "Connecting..." -ForegroundColor Yellow
+    write-host "Connecting..." -ForegroundColor Cyan
     #connect-msolservice -credential $UserCredential
     $Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UsrCredential  -Authentication Basic -AllowRedirection
     Import-PSSession $Session -AllowClobber |  out-null
-    write-host "Connected !" -ForegroundColor Yellow
+    write-host "Connected !" -ForegroundColor Cyan
 }
 <#
 .INIT FROM

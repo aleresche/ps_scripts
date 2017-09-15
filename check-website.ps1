@@ -23,7 +23,7 @@ for ($i=0;$i -le 1000;$i++){
         write-host "$url is responding correctly (HTTP:$httpcode)" -ForegroundColor Magenta | out-file -filepath ./$url.log -Encoding default
     }
     else{
-        write-host "WARNING $url not responding :: ERROR HTTP $httpcode" -ForegroundColor Yellow | out-file -filepath ./$url.log -Encoding default
+        write-host "WARNING $url not responding :: ERROR HTTP $httpcode" -ForegroundColor Cyan | out-file -filepath ./$url.log -Encoding default
     }
     start-sleep -s 60
 }

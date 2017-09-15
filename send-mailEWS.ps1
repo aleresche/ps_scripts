@@ -26,7 +26,7 @@ $inputCred = Join-Path $PWD.ToString()"Cache_login.xml"
 
 ## test if Cache for credential exists
 if((get-childitem "cache_login.xml") -eq $null ){
-    write-host "No Credential Found, creating cache..." -ForegroundColor Yellow
+    write-host "No Credential Found, creating cache..." -ForegroundColor Cyan
     Get-Credential | Export-Clixml $inputCred
 }
 # Load Credential

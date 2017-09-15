@@ -32,7 +32,7 @@ $inputCred = Join-Path $PWD.ToString()".\Cache_MM.xml"
 ## test Parameters
 if ($MailboxToImpersonate -eq $null) {
     ## prompt for Email address of mailbox to access
-    write-host "no mailbox to check was defined..." -ForegroundColor Yellow
+    write-host "no mailbox to check was defined..." -ForegroundColor Cyan
     $MailboxToImpersonate = (read-host "Enter Email address of mailbox to check : ")
 }
 
@@ -51,12 +51,12 @@ $ExchangeVersion = [Microsoft.Exchange.WebServices.Data.ExchangeVersion]::Exchan
 $service = New-Object Microsoft.Exchange.WebServices.Data.ExchangeService($ExchangeVersion)
 
 
-write-host "============= Mailbox Deleting content Tool ==================`n==============================================================" -ForegroundColor Yellow 
-write-host "Preparing connection to EWS Endpoint...." -ForegroundColor Yellow            
+write-host "============= Mailbox Deleting content Tool ==================`n==============================================================" -ForegroundColor Cyan 
+write-host "Preparing connection to EWS Endpoint...." -ForegroundColor Cyan            
 
 ## test if Cache for credential exists
 if(![System.IO.File]::Exists($inputCred)){
-    write-host "No Credential Found, creating cache..." -ForegroundColor Yellow
+    write-host "No Credential Found, creating cache..." -ForegroundColor Cyan
     Get-Credential | Export-Clixml $inputCred
 }
 
@@ -74,7 +74,7 @@ $service.AutodiscoverUrl($AccountWithImpersonationRights ,{$true})
 #MAIN
 #######################################################################################################################################################################################################
 ## Login to Mailbox with Impersonation
-Write-Host 'Using ' $AccountWithImpersonationRights ' to Impersonate ' $MailboxToImpersonate -ForegroundColor Yellow
+Write-Host 'Using ' $AccountWithImpersonationRights ' to Impersonate ' $MailboxToImpersonate -ForegroundColor Cyan
 $service.ImpersonatedUserId = New-Object Microsoft.Exchange.WebServices.Data.ImpersonatedUserId([Microsoft.Exchange.WebServices.Data.ConnectingIdType]::SmtpAddress,$MailboxToImpersonate );
 
 ## Connect to the Inbox and display basic statistics
@@ -82,7 +82,7 @@ $InboxFolder= new-object Microsoft.Exchange.WebServices.Data.FolderId([Microsoft
 $Inbox = [Microsoft.Exchange.WebServices.Data.Folder]::Bind($service,$InboxFolder)
 
 ## List number of items in inbox
-Write-Host 'Total Item count for Inbox:' $Inbox.TotalCount -ForegroundColor Yellow
+Write-Host 'Total Item count for Inbox:' $Inbox.TotalCount -ForegroundColor Cyan
 
 if ($Inbox.TotalCount > 10000 ){
     write-host "WARNING  :  Items count for Inbox is more than 10k items, aborting...."

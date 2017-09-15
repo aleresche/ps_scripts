@@ -43,32 +43,32 @@ if (([string]::IsNullOrEmpty($Username) -eq $false) -and ([string]::IsNullOrEmpt
 else 
 { 
     #Build credentials object
-    write-host "Requesting credential..."  -ForegroundColor Yellow
+    write-host "Requesting credential..."  -ForegroundColor Cyan
     $UserCredential  = Get-Credential
 }
 
 #Connecting to Azure AD & Exchange Online
-write-host "Loading Online Session...." -ForegroundColor Yellow
+write-host "Loading Online Session...." -ForegroundColor Cyan
 connect-msolservice -credential $UserCredential
 $Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UserCredential -Authentication Basic -AllowRedirection
 Import-PSSession $Session -AllowClobber |  out-null
-write-host "Online session established !" -ForegroundColor Yellow
+write-host "Online session established !" -ForegroundColor Cyan
 
 # Menu multiple choice to guide the user
 function Show-Menu {
-     Write-Host "================ Userlogon Rename ================" -ForegroundColor Yellow
+     Write-Host "================ Userlogon Rename ================" -ForegroundColor Cyan
      
-     Write-Host "1: Press '1' to update from $CurrentDomain to $NewDomain" -ForegroundColor Yellow
-     Write-Host "Q: Press 'Q' to quit." -ForegroundColor Yellow
+     Write-Host "1: Press '1' to update from $CurrentDomain to $NewDomain" -ForegroundColor Cyan
+     Write-Host "Q: Press 'Q' to quit." -ForegroundColor Cyan
 }
 
 do {
      Show-Menu
-     write-host "Please make a selection" -ForegroundColor Yellow
+     write-host "Please make a selection" -ForegroundColor Cyan
      $input = Read-Host 
      switch ($input)
      {
-           '1' {write-host 'Starting Update process'-ForegroundColor Yellow} 
+           '1' {write-host 'Starting Update process'-ForegroundColor Cyan} 
            'q' {exit}
      }
 }
@@ -83,7 +83,7 @@ $date = Get-Date -Format ddMMyyyy-HHmmss
 if ($input -eq '1'){  # Migrating switch
     #Renaming SMTP Primary 
     $Mailboxes = get-mailbox -ResultSize Unlimited
-    write-host "Renaming Emails...." -ForegroundColor Yellow
+    write-host "Renaming Emails...." -ForegroundColor Cyan
     foreach ($Mailbox in $Mailboxes){
         if ($Mailbox.PrimarySmtpAddress -match $CurrentDomain <#-and $Mailbox.PrimarySmtpAddress.ToString() -match $Filter#>){
             $Smtp = $Mailbox.PrimarySmtpAddress
@@ -99,11 +99,11 @@ if ($input -eq '1'){  # Migrating switch
     $TotalSMTP = "Total Emails Renamed : " + $CountSMTP
     $TotalSMTP | out-file -FilePath $pwd\Migr_SMTP_renaming_report_$date.txt -append -Encoding Default
     write-host "=====================`n"+ $TotalSMTP -ForegroundColor Magenta
-    write-host "Done!`n`n" -ForegroundColor Yellow
+    write-host "Done!`n`n" -ForegroundColor Cyan
 
 
     #Renaming UPN
-    write-host "Renaming UPNs...." -ForegroundColor Yellow
+    write-host "Renaming UPNs...." -ForegroundColor Cyan
     Get-MsolUser -All | Where {$_.UserPrincipalName.ToLower().EndsWith($CurrentDomain.ToString()) <#-and $_.UserPrincipalName.ToString() -match $filter#>} | ForEach {
      #if($count -eq 1) #For Testing the first result
      # {
@@ -119,9 +119,9 @@ if ($input -eq '1'){  # Migrating switch
     $TotalUPN = "Total UPNs Renamed : " + $count 
     $TotalUPN | out-file -FilePath $pwd\Migr_UPN_renaming_report_$date.txt -append -Encoding Default
     write-host "=====================`n"+ $TotalUPN -ForegroundColor Magenta
-    write-host "Done!`n`n" -ForegroundColor Yellow
+    write-host "Done!`n`n" -ForegroundColor Cyan
 }
 
 #Cleaning sessions
- write-host "Closing sessions...`nOperation completed" -ForegroundColor Yellow
+ write-host "Closing sessions...`nOperation completed" -ForegroundColor Cyan
  Get-PSSession | Remove-PSSession

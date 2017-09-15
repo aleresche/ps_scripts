@@ -39,7 +39,7 @@ Param(
 #Remove all existing Powershell sessions  
 Get-PSSession | Remove-PSSession
 #Introduction
-write-host "Preparing Tool...`nLooking for login cache..." -ForegroundColor Yellow
+write-host "Preparing Tool...`nLooking for login cache..." -ForegroundColor Cyan
 #Login Management
 $inputCred = Join-Path $PWD.ToString()"\..\Cred.xml"  
 if(![System.IO.File]::Exists($inputCred)){
@@ -62,32 +62,32 @@ $Domain = $AdmUsr -split '@'
 # Set this variable to the location of the file where credentials are cached
 $UsrCredential = Import-Clixml $inputCred
 #Connecting to Azure AD & Exchange Online
-write-host "Connecting using User : " $AdmUsr -ForegroundColor Yellow
+write-host "Connecting using User : " $AdmUsr -ForegroundColor Cyan
 connect-msolservice -credential $UsrCredential
 $Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UsrCredential -Authentication Basic -AllowRedirection
 Import-PSSession $Session -AllowClobber |  out-null
-write-host "Connected !" -ForegroundColor Yellow
+write-host "Connected !" -ForegroundColor Cyan
 
 
 # Menu multiple choice to guide the user
 function Show-Menu {
-     Write-Host "================ Userlogon Renaming ================" -ForegroundColor Yellow
-     Write-host "Connected on Tenant : $($Domain[1])" -ForegroundColor Yellow
-     Write-Host "1: Press '1' to Migrate from $CurrentDomain to $NewDomain" -ForegroundColor Yellow
-     Write-Host "2: Press '2' to Rollback from $CurrentDomain to $Newdomain"  -ForegroundColor Yellow
-     Write-Host "Q: Press 'Q' to quit." -ForegroundColor Yellow
+     Write-Host "================ Userlogon Renaming ================" -ForegroundColor Cyan
+     Write-host "Connected on Tenant : $($Domain[1])" -ForegroundColor Cyan
+     Write-Host "1: Press '1' to Migrate from $CurrentDomain to $NewDomain" -ForegroundColor Cyan
+     Write-Host "2: Press '2' to Rollback from $CurrentDomain to $Newdomain"  -ForegroundColor Cyan
+     Write-Host "Q: Press 'Q' to quit." -ForegroundColor Cyan
 }
 do {
      Show-Menu
-     write-host "Please make a selection" -ForegroundColor Yellow
+     write-host "Please make a selection" -ForegroundColor Cyan
      $input = Read-Host
      switch ($input)
      {
-           '1' {write-host 'You chose option #1' -ForegroundColor Yellow} 
-           '2' {write-host 'You chose option #2' -ForegroundColor Yellow}
+           '1' {write-host 'You chose option #1' -ForegroundColor Cyan} 
+           '2' {write-host 'You chose option #2' -ForegroundColor Cyan}
            'q' {
                 #Cleaning sessions
-                write-host "Closing sessions...`nOperation aborted" -ForegroundColor Yellow
+                write-host "Closing sessions...`nOperation aborted" -ForegroundColor Cyan
                 Get-PSSession | Remove-PSSession
                 exit
                }
@@ -104,7 +104,7 @@ $date = Get-Date -Format ddMMyyyy-HHmmss
 if ($input -eq '1'){  # Migrating switch
     #Renaming SMTP Primary 
     $Mailboxes = get-mailbox -ResultSize Unlimited
-    write-host "Renaming Emails/Alias/SIP...." -ForegroundColor Yellow
+    write-host "Renaming Emails/Alias/SIP...." -ForegroundColor Cyan
     foreach ($Mailbox in $Mailboxes){
         if ($Mailbox.PrimarySmtpAddress -like "*$CurrentDomain" -and $Mailbox.PrimarySmtpAddress.ToString() -match $Filter){
             $Smtp = $Mailbox.PrimarySmtpAddress
@@ -125,10 +125,10 @@ if ($input -eq '1'){  # Migrating switch
     $TotalSMTP = "Total Users Renamed : " + $CountSMTP
     $TotalSMTP | out-file -FilePath $pwd\Migr_SMTP_renaming_report_$date.log -append -Encoding Default
     write-host "=====================`n"$TotalSMTP -ForegroundColor Magenta
-    write-host "Done!" -ForegroundColor Yellow
+    write-host "Done!" -ForegroundColor Cyan
 
     #Renaming UPN
-    write-host "Renaming UPNs...." -ForegroundColor Yellow
+    write-host "Renaming UPNs...." -ForegroundColor Cyan
     Get-MsolUser -All | Where {$_.UserPrincipalName.ToLower().EndsWith($CurrentDomain.ToString()) -and $_.UserPrincipalName.ToString() -match $filter} | ForEach {
         $upnVal = $_.UserPrincipalName.Split("@")[0] + "@"+$NewDomain.ToString()
         $upnVal = $upnVal -replace $filter,""
@@ -141,7 +141,7 @@ if ($input -eq '1'){  # Migrating switch
     $TotalUPN = "Total Users Renamed : " + $count 
     $TotalUPN | out-file -FilePath $pwd\Migr_UPN_renaming_report_$date.log -append -Encoding Default
     write-host "=====================`n"$TotalUPN -ForegroundColor Magenta
-    write-host "Done!" -ForegroundColor Yellow
+    write-host "Done!" -ForegroundColor Cyan
     
 }
 
@@ -152,7 +152,7 @@ if ($input -eq '1'){  # Migrating switch
 if ($input -eq '2'){
     #Renaming SMTP/ALIAS/SIP Primary 
     $Mailboxes = get-mailbox -ResultSize Unlimited
-    write-host "Renaming Emails...." -ForegroundColor Yellow
+    write-host "Renaming Emails...." -ForegroundColor Cyan
     foreach ($Mailbox in $Mailboxes){
         if ($Mailbox.PrimarySmtpAddress -like "*$CurrentDomain"){
             $Smtp = $Mailbox.PrimarySmtpAddress
@@ -173,10 +173,10 @@ if ($input -eq '2'){
     $TotalSMTP = "Total Emails Renamed : "+$CountSMTP
     $TotalSMTP | out-file -FilePath $pwd\Rollback_SMTP_renaming_report_$date.log -append -Encoding Default
     write-host "=====================`n"$TotalSMTP -ForegroundColor Magenta
-    write-host "Done!" -ForegroundColor Yellow
+    write-host "Done!" -ForegroundColor Cyan
 
     #Renaming UPN
-    write-host "Renaming UPNs...." -ForegroundColor Yellow
+    write-host "Renaming UPNs...." -ForegroundColor Cyan
     Get-MsolUser -All | Where {$_.UserPrincipalName.ToLower() -like "*$CurrentDomain"} | ForEach {
         $upnVal = $_.UserPrincipalName.Split("@")[0]+ $filter + "@"+$NewDomain.ToString()
         $OutUPN = "Changing UPN value from: "+ $_.UserPrincipalName+" to: "+ $upnVal
@@ -190,11 +190,11 @@ if ($input -eq '2'){
     $TotalUPN = "Total UPNs Renamed : "+$count 
     $TotalUPN | out-file -FilePath $pwd\Rollback_UPN_renaming_report_$date.log -append -Encoding Default
     write-host "=====================`n"$TotalUPN -ForegroundColor Magenta
-    write-host "Done!" -ForegroundColor Yellow 
+    write-host "Done!" -ForegroundColor Cyan 
 }
 
 
 
 #Cleaning sessions
-write-host "Closing sessions...`nOperation completed" -ForegroundColor Yellow
+write-host "Closing sessions...`nOperation completed" -ForegroundColor Cyan
 Get-PSSession | Remove-PSSession

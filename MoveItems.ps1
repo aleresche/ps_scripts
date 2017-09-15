@@ -81,7 +81,7 @@ Function LoadEWSManagedAPI()
 			Add-Type -Path $EWSManagedApiPath
 			return $true
 		}
-		Write-Host ( [string]::Format("Managed API not found at specified location: {0}", $EWSManagedApiPath) ) -ForegroundColor Yellow
+		Write-Host ( [string]::Format("Managed API not found at specified location: {0}", $EWSManagedApiPath) ) -ForegroundColor Cyan
 	}
 	
 	$a = Get-ChildItem -Recurse "C:\Program Files (x86)\Microsoft\Exchange\Web Services" -ErrorAction SilentlyContinue | Where-Object { ($_.PSIsContainer -eq $false) -and ( $_.Name -eq "Microsoft.Exchange.WebServices.dll" ) }
@@ -262,7 +262,7 @@ Function GetFolder()
 # This needs to be done *before* the managed API is loaded, otherwise it doesn't work consistently (i.e. usually doesn't!)
 if ($IgnoreSSLCertificate)
 {
-	Write-Host "WARNING: Ignoring any SSL certificate errors" -foregroundColor Yellow
+	Write-Host "WARNING: Ignoring any SSL certificate errors" -foregroundColor Cyan
     TrustAllCerts
 }
  

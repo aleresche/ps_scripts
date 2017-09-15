@@ -32,13 +32,13 @@ if (([string]::IsNullOrEmpty($Username) -eq $false) -and ([string]::IsNullOrEmpt
 else 
 { 
     #Build credentials object
-    write-host "Requesting credential..."  -ForegroundColor Yellow
+    write-host "Requesting credential..."  -ForegroundColor Cyan
     $UserCredential  = Get-Credential
 }
 
 #Establishing Session
-write-host "Loading Online Session...." -ForegroundColor Yellow
+write-host "Loading Online Session...." -ForegroundColor Cyan
 $Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UserCredential -Authentication Basic -AllowRedirection
 Import-PSSession $Session -AllowClobber | Out-Null
-write-host "Online session established !" -ForegroundColor Yellow
+write-host "Online session established !" -ForegroundColor Cyan
 }

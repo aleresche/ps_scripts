@@ -26,9 +26,9 @@ Param(
 Get-PSSession | Remove-PSSession
 #Introduction
 cls
-write-host "Connect to MS O365 Online services" -ForegroundColor Yellow
-write-host "==================================" -ForegroundColor Yellow
-write-host "Preparing data to setup connection...`nLooking for login cache..." -ForegroundColor Yellow
+write-host "Connect to MS O365 Online services" -ForegroundColor Cyan
+write-host "==================================" -ForegroundColor Cyan
+write-host "Preparing data to setup connection...`nLooking for login cache..." -ForegroundColor Cyan
 
 #Login Management
 $Admins = @()
@@ -56,31 +56,31 @@ $UsrCredential = Import-Clixml $inputCred
 
 # Menu multiple choice to guide the user
 function Show-MenuConnect {
-     Write-Host "================ Connecting ================" -ForegroundColor Yellow
-     Write-host "Connecting on Tenant : $($Domain[1])" -ForegroundColor Yellow
-     write-host "With User : $($Domain[0])" -ForegroundColor Yellow
-     Write-Host "================= Options ==================" -ForegroundColor Yellow
-     Write-Host "1: Press '1' Connect to O365 only" -ForegroundColor Yellow
-     Write-Host "2: Press '2' Connect to O365 & MS Online"  -ForegroundColor Yellow
-     Write-host "3: Press '3' Change admin login" -ForegroundColor Yellow
-     Write-Host "Q: Press 'Q' to quit." -ForegroundColor Yellow
+     Write-Host "================ Connecting ================" -ForegroundColor Cyan
+     Write-host "Connecting on Tenant : $($Domain[1])" -ForegroundColor Cyan
+     write-host "With User : $($Domain[0])" -ForegroundColor Cyan
+     Write-Host "================= Options ==================" -ForegroundColor Cyan
+     Write-Host "1: Press '1' Connect to O365 only" -ForegroundColor Cyan
+     Write-Host "2: Press '2' Connect to O365 & MS Online"  -ForegroundColor Cyan
+     Write-host "3: Press '3' Change admin login" -ForegroundColor Cyan
+     Write-Host "Q: Press 'Q' to quit." -ForegroundColor Cyan
 }
 do {
      Show-MenuConnect
-     write-host "Please make a selection" -ForegroundColor Yellow
+     write-host "Please make a selection" -ForegroundColor Cyan
      $input = Read-Host
      switch ($input)
      {
-           '1' {write-host 'You chose option #1' -ForegroundColor Yellow} 
-           '2' {write-host 'You chose option #2' -ForegroundColor Yellow}
-           '3' {write-host 'You chose option #2' -ForegroundColor Yellow
-                write-host "Changing admin login...`nPlease Input new Credential" -ForegroundColor Yellow
+           '1' {write-host 'You chose option #1' -ForegroundColor Cyan} 
+           '2' {write-host 'You chose option #2' -ForegroundColor Cyan}
+           '3' {write-host 'You chose option #2' -ForegroundColor Cyan
+                write-host "Changing admin login...`nPlease Input new Credential" -ForegroundColor Cyan
                 Get-Credential | Export-Clixml $inputCred
                 Show-MenuConnect
                }
            'q' {
                 #Cleaning sessions
-                write-host "Closing sessions...`nOperation aborted" -ForegroundColor Yellow
+                write-host "Closing sessions...`nOperation aborted" -ForegroundColor Cyan
                 Get-PSSession | Remove-PSSession
                 exit
                }
@@ -90,13 +90,13 @@ until ($input -eq 'q' -or $input -eq '1'-or $input -eq '2'-or $input -eq '3')
 
 
 #Connecting to Azure AD & Exchange Online
-write-host "Connecting using User : " $AdmUsr -ForegroundColor Yellow
+write-host "Connecting using User : " $AdmUsr -ForegroundColor Cyan
 $UsrCredential = Import-Clixml $inputCred
 if ($input -eq '2'){
     connect-msolservice -credential $UsrCredential
 }
 $Session = New-PSSession -Name "ExchangeOnline" -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UsrCredential -Authentication Basic -AllowRedirection
 Import-PSSession $Session -AllowClobber |  out-null
-write-host "Connected !" -ForegroundColor Yellow
+write-host "Connected !" -ForegroundColor Cyan
 
 

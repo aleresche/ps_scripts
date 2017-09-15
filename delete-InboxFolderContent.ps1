@@ -15,7 +15,7 @@
 <#
 .INIT - load Exchange DLL to access EWS API
 #>
-write-host "======================= Mailbox Cleaning Tool =============================" -ForegroundColor Yellow
+write-host "======================= Mailbox Cleaning Tool =============================" -ForegroundColor Cyan
 #Load Exchange web service DLL
 Add-Type -Path "C:\Program Files\Microsoft\Exchange\Web Services\2.2\Microsoft.Exchange.WebServices.dll"
 $FoldertoClean = "Inbox"
@@ -35,10 +35,10 @@ $TestUrlCallback = {
 
 
 #set up EWS  connector
-write-host "Configuring EWS API access..." -ForegroundColor Yellow
+write-host "Configuring EWS API access..." -ForegroundColor Cyan
 $ews = New-Object Microsoft.Exchange.WebServices.Data.ExchangeService -ArgumentList "Exchange2010"
 #set up credential
-write-host "Provide Admin credential" -ForegroundColor Yellow
+write-host "Provide Admin credential" -ForegroundColor Cyan
 $cred = (Get-Credential).GetNetworkCredential()
 $ews.Credentials = New-Object System.Net.NetworkCredential -ArgumentList $cred.UserName, $cred.Password, $cred.Domain
 #Specify Email of admin account
@@ -48,7 +48,7 @@ $ews.ImpersonateUserId = New-Object Microsoft.Exchange.WebServices.Data.Imperson
 #bind mailbox to clean to service
 $InboxFolder= new-object Microsoft.Exchange.WebServices.Data.FolderId([Microsoft.Exchange.WebServices.Data.WellKnownFolderName]::Inbox,$ImpersonatedMailboxName)
 $Inbox = [Microsoft.Exchange.WebServices.Data.Folder]::Bind($ews,$InboxFolder)
-write-host "EWS endpoint configured`nPreparing to delete content..." -ForegroundColor Yellow
+write-host "EWS endpoint configured`nPreparing to delete content..." -ForegroundColor Cyan
 #Lopping to retrieve items inside Inbox folder
 $results = $ews.FindItems(
 	$FoldertoClean,

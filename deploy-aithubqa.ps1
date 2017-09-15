@@ -6,7 +6,7 @@
 .EXAMPLE
 	./deploy-aithubqa.ps1 -releasepath c:\temp\hub.1.7.0\
 .NOTES
-   	Version 0.1
+   	Version 0.5
        
    	Written by Arnaud Leresche
 #>
@@ -44,7 +44,7 @@ if(![System.IO.File]::Exists($releasefile)){
 #No cache found asking for Credential
 if(![System.IO.File]::Exists($inputCred)){
 	write-host "No Credential Found, creating cache..." -ForegroundColor Red
-	write-host "Please provide Credential :" -ForegroundColor Yellow
+	write-host "Please provide Credential :" -ForegroundColor Cyan
     $inputCred = Join-Path $PWD.ToString()".\Cache_login.xml"  
     Get-Credential | Export-Clixml $inputCred
 }
@@ -61,27 +61,27 @@ Add-Type -assembly "system.io.compression.filesystem"
 #=========================================================================================================================================================================
 # 
 function Show-MenuConnect {
-	Write-Host "================ AIT Hub PsDeploy ================" -ForegroundColor Yellow
-	Write-host "AIT HUB version to Deploy : $deployedrelease" -ForegroundColor Yellow
-	write-host "Production ENV Script" -ForegroundColor Yellow
-	Write-Host "=================== Options ======================" -ForegroundColor Yellow
-	Write-Host "1: Press '1' Deploy Databases" -ForegroundColor Yellow
-	Write-Host "2: Press '2' Deploy Web Services"  -ForegroundColor Yellow
-	Write-host "3: Press '3' Change Web Contents" -ForegroundColor Yellow
-	Write-Host "Q: Press 'Q' to quit." -ForegroundColor Yellow
+	Write-Host "================ AIT Hub PsDeploy ================" -ForegroundColor Cyan
+	Write-host "AIT HUB version to Deploy : $deployedrelease" -ForegroundColor Cyan
+	write-host "Production ENV Script" -ForegroundColor Cyan
+	Write-Host "=================== Options ======================" -ForegroundColor Cyan
+	Write-Host "1: Press '1' Deploy Databases" -ForegroundColor Cyan
+	Write-Host "2: Press '2' Deploy Web Services"  -ForegroundColor Cyan
+	Write-host "3: Press '3' Change Web Contents" -ForegroundColor Cyan
+	Write-Host "Q: Press 'Q' to quit." -ForegroundColor Cyan
 }
 do {
 	Show-MenuConnect
-	write-host "Please make a selection" -ForegroundColor Yellow
+	write-host "Please make a selection" -ForegroundColor Cyan
 	$input = Read-Host
 	switch ($input)
 	{
-		  '1' {write-host 'You chose option #1' -ForegroundColor Yellow} 
-		  '2' {write-host 'You chose option #2' -ForegroundColor Yellow}
-		  '3' {write-host 'You chose option #3' -ForegroundColor Yellow}
+		  '1' {write-host 'You chose option #1' -ForegroundColor Cyan} 
+		  '2' {write-host 'You chose option #2' -ForegroundColor Cyan}
+		  '3' {write-host 'You chose option #3' -ForegroundColor Cyan}
 		  'q' {
 			   #Cleaning sessions
-			   write-host "Closing sessions...`nOperation aborted" -ForegroundColor Yellow
+			   write-host "Closing sessions...`nOperation aborted" -ForegroundColor Cyan
 			   Get-PSSession | Remove-PSSession
 			   exit
 			  }

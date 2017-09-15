@@ -18,7 +18,7 @@ Param(
 
 
 if ((Get-Command "Invoke-Sqlcmd") -eq $null) {
-	Write-host "Module MS SQL is missing..." -ForegroundColor Yellow
+	Write-host "Module MS SQL is missing..." -ForegroundColor Cyan
 	Install-Module -Name SqlServer
 }
 
