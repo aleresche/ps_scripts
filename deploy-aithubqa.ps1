@@ -12,7 +12,7 @@
 .EXAMPLE
 	   ./deploy-aithubqa.ps1 -releasefile hub.1.7.3.v3.zip
 .NOTES
-   	   Version 0.2
+   	   Version 0.5
        
    	   Written by Arnaud Leresche
 #>
@@ -40,7 +40,7 @@ $inputCred = Join-Path $PWD.ToString()".\Cache_login.xml"
 #=========================================================================================================================================================================
 
 #=========================================================================================================================================================================
-# Init  
+# Init and Pre check tests  
 #=========================================================================================================================================================================
 # Remove all existing Powershell sessions  
 Get-PSSession | Remove-PSSession
@@ -75,14 +75,76 @@ if (![System.IO.Directory]::Exists($deployedrelease)){
 }
 #=========================================================================================================================================================================
 #=========================================================================================================================================================================
+# Function Database Deploy 
+#=========================================================================================================================================================================
+function set-aitDB{
+	Get-ChildItem -Path $deployedrelease"\01 - Database\Configuration\" | ForEach-Object {
+		$queryname = $_.Name
+		# Invoke query on Hub PRD
+		Invoke-Sqlcmd -InputFile $deployedrelease"\01 - Database\Configuration\"$queryname`
+		-ServerInstance $dbServer -Username $UsrCredential.Username -Password $UsrCredential.GetNetworkCredential().password | Out-File -filePath $PWD.Path"\result_$queryname.rpt" 
+	}
+	write-host "SQL script deployed, you can check results in the rpt files" -ForegroundColor Magenta
+}
+
+#=========================================================================================================================================================================
+# Function Web Service deploy
+#=========================================================================================================================================================================
+function set-aitWebSrv {
+	$WebServerSession = New-PSSession -Name "WebAIT" -ComputerName $webServer -Credential $UsrCredential
+	Get-ChildItem -Path $deployedrelease"\02 - Web services\" | ForEach-Object {
+		Copy-Item -FromSession $WebServerSession -Path $deployedrelease"\02 - Web services\"$_.Name -Destination "D:\Blue Infinity\Web Services\"$_.Name
+	}
+	write-host "Web Services deployed" -ForegroundColor Magenta
+}
+#=========================================================================================================================================================================
+
+#=========================================================================================================================================================================
+# Function Web Content deploy
+#=========================================================================================================================================================================
+function set-aitWebContent {
+	$WebServerSession = New-PSSession -Name "WebAIT" -ComputerName $webServer -Credential $UsrCredential
+	# Retrieve Remote Directory Infos
+	$destiRelease = Invoke-Command -session $WebServerSession -ScriptBlock {Get-ChildItem-Path "D:\inetpub\wwwroot\" -Recurse}
+	Get-ChildItem -Path $deployedrelease"\03 - Web Content\" -Recurse | ForEach-Object {
+		foreach ($item in $destiRelease) {
+			if ((Compare-Object -RefererenceObject $item.size -DifferenceObject $_.size)-eq $null)  {
+				write-host "skipping $_ no diff" -ForegroundColor Magenta
+				break
+			}
+			if  ((Compare-Object -RefererenceObject $item.size -DifferenceObject $_.size)-eq $null)  {
+			}
+			if  ((Compare-Object -RefererenceObject $item.size -DifferenceObject $_.size)-eq $null)  {
+			}
+		}
+	
+			 
+		
+		Copy-Item -ToSession $WebServerSession -Path $deployedrelease"\01 - Web services\"$_.Name -Destination "D:\inetpub\wwwroot\"$_.Name
+	}
+	write-host "Web Content deployed" -ForegroundColor Magenta
+}
+}
+#=========================================================================================================================================================================
+# Cleaning sessions
+#=========================================================================================================================================================================
+function close-deploy {
+	write-host "Deployment Completed" -ForegroundColor Cyan
+	Get-PSSession | Remove-PSSession
+}
+#=========================================================================================================================================================================
+
+#=========================================================================================================================================================================
 # Menu Deploy 
 #=========================================================================================================================================================================
 # 
 function Show-MenuConnect {
 	Write-Host "================ AIT Hub PsDeploy ================" -ForegroundColor Cyan
-	Write-host "AIT HUB version to Deploy : $releaseVersion" -ForegroundColor Cyan
-	write-host "Production ENV Script" -ForegroundColor Cyan
+	Write-Host "==================================================" -ForegroundColor Cyan
+	Write-host "AIT HUB Deploying : $releaseVersion" -ForegroundColor Cyan
+	write-host "QA ENV Script" -ForegroundColor Cyan
 	Write-Host "=================== Options ======================" -ForegroundColor Cyan
+	Write-Host "==================================================" -ForegroundColor Cyan
 	Write-Host "1: Press '1' Deploy Databases" -ForegroundColor Cyan
 	Write-Host "2: Press '2' Deploy Web Services"  -ForegroundColor Cyan
 	Write-host "3: Press '3' Change Web Contents" -ForegroundColor Cyan
@@ -114,28 +176,43 @@ until ($input -eq 'q' -or $input -eq '1'-or $input -eq '2'-or $input -eq '3')
 #=========================================================================================================================================================================
 # Loop through all SQL script in Configuration repo
 if ($input -eq "1"){
-	Get-ChildItem -Path $deployedrelease"\01 - Database\Configuration\" | ForEach-Object {
-		$queryname = $_.Name
-		# Invoke query on Hub PRD
-		Invoke-Sqlcmd -InputFile $deployedrelease"\01 - Database\Configuration\"$queryname`
-		-ServerInstance $dbServer -Username $UsrCredential.Username -Password $UsrCredential.GetNetworkCredential().password | Out-File -filePath $PWD.Path"\result_$queryname.rpt" 
+	# Deploy function for DB
+	set-aitDB
+	# Test to leave or return to menu
+	do {
+		write-host "Return to Menu ? yes (y) or no (n) : " -ForegroundColor Magenta
+		$read = read-host
+	} 
+	until ($read -eq 'y' -or $read -eq 'n')
+	if ($read -eq 'y'){
+		Show-MenuConnect
 	}
-	write-host "SQL script deployed, you can check results in the rpt files" -ForegroundColor Magenta
-	Show-MenuConnect
+	elseif ($read -eq 'n'){
+		close-deploy
+	}
 }
 
 #=========================================================================================================================================================================
-$WebServerSession = New-PSSession -Name "WebAIT" -ComputerName $webServer -Credential $UsrCredential
+
 #=========================================================================================================================================================================
 # Services Modification
 #=========================================================================================================================================================================
 #
 if ($input -eq "2"){
-	Get-ChildItem -Path $deployedrelease"\02 - Web services\" | ForEach-Object {
-		Copy-Item -FromSession $WebServerSession -Path $deployedrelease"\02 - Web services\"$_.Name -Destination "D:\Blue Infinity\Web Services\"$_.Name
+	# Deploy function for Web Service
+	set-aitWebSrv
+	# Test to leave or return to menu
+	do {
+		write-host "Return to Menu ? yes (y) or no (n) : " -ForegroundColor Magenta
+		$read = read-host
+	} 
+	until ($read -eq 'y' -or $read -eq 'n')
+	if ($read -eq 'y'){
+		Show-MenuConnect
 	}
-	write-host "Web Services deployed" -ForegroundColor Magenta
-	Show-MenuConnect
+	elseif ($read -eq 'n'){
+		close-deploy
+	}
 }
 #=========================================================================================================================================================================
 
@@ -144,16 +221,20 @@ if ($input -eq "2"){
 #=========================================================================================================================================================================
 #
 if ($input -eq "3"){
-	Get-ChildItem -Path $deployedrelease"\03 - Web Content\" | ForEach-Object {
-		Copy-Item -FromSession $WebServerSession -Path $deployedrelease"\01 - Web services\"$_.Name -Destination "D:\inetpub\wwwroot\"$_.Name
+	# Deploy function for Web Content
+	set-aitWebContent
+	# Test to leave or return to menu
+	do {
+		write-host "Return to Menu ? yes (y) or no (n) : " -ForegroundColor Magenta
+		$read = read-host
+	} 
+	until ($read -eq 'y' -or $read -eq 'n')
+	if ($read -eq 'y'){
+		Show-MenuConnect
 	}
-	write-host "Web Content deployed" -ForegroundColor Magenta
-	Show-MenuConnect
+	elseif ($read -eq 'n'){
+		close-deploy
+	}
 }
 #=========================================================================================================================================================================
 
-#=========================================================================================================================================================================
-# Cleaning sessions
-write-host "Deployment Completed" -ForegroundColor Cyan
-Get-PSSession | Remove-PSSession
-#=========================================================================================================================================================================
