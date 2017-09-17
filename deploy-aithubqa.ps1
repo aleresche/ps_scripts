@@ -10,7 +10,7 @@
 	   if conflict of version prompt will be made to ask admin for manual input about which version keep
 	   
 .EXAMPLE
-	   ./deploy-aithubqa.ps1 -releasepath c:\temp\hub.1.7.0\
+	   ./deploy-aithubqa.ps1 -releasefile hub.1.7.3.v3.zip
 .NOTES
    	   Version 0.2
        
@@ -46,15 +46,16 @@ $inputCred = Join-Path $PWD.ToString()".\Cache_login.xml"
 Get-PSSession | Remove-PSSession
 
 # Test if SQL pshell module is present, install it if not the case
-if ((Get-Command "Invoke-Sqlcmd") -eq $null) {
-	Write-host "Module MS SQL is missing..." -ForegroundColor Red
-	Install-Module -Name SqlServer
+if ( $(Get-InstalledModule -Name "SqlServer" -ErrorAction SilentlyContinue) -eq $null ) {
+	Write-host "Module MS SQL is missing...`n" -ForegroundColor Red
+	Write-host "Installing SQL module..." -ForegroundColor Cyan
+	Install-Module -Name SqlServer 
 }
 
 # Test if Release file exists
 if(![System.IO.File]::Exists($fullpath)){
 	write-host "No Release Found !`n`nmake sure a release zip file is present and named HUB.x.x.x" -ForegroundColor Red
-	Exit;
+	Exit
 }
 
 #No cache found asking for Credential
@@ -67,7 +68,7 @@ if(![System.IO.File]::Exists($inputCred)){
 $UsrCredential = Import-Clixml $inputCred
 
 # Uncompress Zip file for release
-if (![System.IO.File]::Exists($deployedrelease)){
+if (![System.IO.Directory]::Exists($deployedrelease)){
 	write-host "Extracting release zip file....`nPlease wait" -ForegroundColor Magenta
 	Add-Type -assembly "system.io.compression.filesystem"
 	[io.compression.zipfile]::ExtractToDirectory($fullpath, $deployedrelease)
