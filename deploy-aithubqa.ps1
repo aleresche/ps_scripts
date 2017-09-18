@@ -79,10 +79,16 @@ if (![System.IO.Directory]::Exists($deployedrelease)){
 #=========================================================================================================================================================================
 function set-aitDB{
 	Get-ChildItem -Path $deployedrelease"\01 - Database\Configuration\" | ForEach-Object {
+		$inputfilepath = $deployedrelease+"\01 - Database\Configuration\"+$_.Name
 		$queryname = $_.Name
-		# Invoke query on Hub PRD
-		Invoke-Sqlcmd -InputFile $deployedrelease"\01 - Database\Configuration\"$queryname`
-		-ServerInstance $dbServer -Username $UsrCredential.Username -Password $UsrCredential.GetNetworkCredential().password | Out-File -filePath $PWD.Path"\result_$queryname.rpt" 
+		# Invoke query on Hub DB
+		try {
+			Invoke-Sqlcmd -InputFile $inputfilepath -ServerInstance $dbServer -Username $UsrCredential.Username -Password $UsrCredential.GetNetworkCredential().password`
+			| Out-File -filePath $PWD.Path"\result_$queryname.rpt" 
+		}
+		catch {
+			write-host "There was an error in the sql file $queryname, please correct and try again" -ForegroundColor Red
+		}
 	}
 	write-host "SQL script deployed, you can check results in the rpt files" -ForegroundColor Magenta
 }
@@ -92,10 +98,15 @@ function set-aitDB{
 #=========================================================================================================================================================================
 function set-aitWebSrv {
 	$WebServerSession = New-PSSession -Name "WebAIT" -ComputerName $webServer -Credential $UsrCredential
-	Get-ChildItem -Path $deployedrelease"\02 - Web services\" | ForEach-Object {
-		Copy-Item -FromSession $WebServerSession -Path $deployedrelease"\02 - Web services\"$_.Name -Destination "D:\Blue Infinity\Web Services\"$_.Name
+	# Retrieve files and directories on Remote and from zipped content
+	$refRelease = Invoke-Command -session $WebServerSession -ScriptBlock {Get-ChildItem-Path "D:\inetpub\wwwroot\" -Recurse}
+	$Ziprelease = Get-ChildItem -Path $deployedrelease"\02 - Windows Services\" -Recurse
+	# Compare files and copy it if name and size are different
+ 	compare-object $refRelease $ZipRelease -Property Name,Length | Where-Object {$_.SideIndicator -eq "<="} | foreach-object {
+		Copy-Item -ToSession $WebServerSession -Path $deployedrelease"\02 - Windows Services\"$_.Name -Destination "D:\inetpub\wwwroot\"
 	}
-	write-host "Web Services deployed" -ForegroundColor Magenta
+	write-host "Web Content deployed" -ForegroundColor Magenta
+	Get-PSSession | Remove-PSSession
 }
 #=========================================================================================================================================================================
 
@@ -104,26 +115,15 @@ function set-aitWebSrv {
 #=========================================================================================================================================================================
 function set-aitWebContent {
 	$WebServerSession = New-PSSession -Name "WebAIT" -ComputerName $webServer -Credential $UsrCredential
-	# Retrieve Remote Directory Infos
-	$destiRelease = Invoke-Command -session $WebServerSession -ScriptBlock {Get-ChildItem-Path "D:\inetpub\wwwroot\" -Recurse}
-	Get-ChildItem -Path $deployedrelease"\03 - Web Content\" -Recurse | ForEach-Object {
-		foreach ($item in $destiRelease) {
-			if ((Compare-Object -RefererenceObject $item.size -DifferenceObject $_.size)-eq $null)  {
-				write-host "skipping $_ no diff" -ForegroundColor Magenta
-				break
-			}
-			if  ((Compare-Object -RefererenceObject $item.size -DifferenceObject $_.size)-eq $null)  {
-			}
-			if  ((Compare-Object -RefererenceObject $item.size -DifferenceObject $_.size)-eq $null)  {
-			}
-		}
-	
-			 
-		
-		Copy-Item -ToSession $WebServerSession -Path $deployedrelease"\01 - Web services\"$_.Name -Destination "D:\inetpub\wwwroot\"$_.Name
+	# Retrieve files and directories on Remote and from zipped content
+	$refRelease = Invoke-Command -session $WebServerSession -ScriptBlock {Get-ChildItem-Path "D:\inetpub\wwwroot\" -Recurse}
+	$Ziprelease = Get-ChildItem -Path $deployedrelease"\03 - Web Applications\" -Recurse
+	# Compare files and copy it if name and size are different
+ 	compare-object $refRelease $ZipRelease -Property Name,Length | Where-Object {$_.SideIndicator -eq "<="} | foreach-object {
+		Copy-Item -ToSession $WebServerSession -Path $deployedrelease"\03 - Web Applications\"$_.Name -Destination "D:\inetpub\wwwroot\"
 	}
 	write-host "Web Content deployed" -ForegroundColor Magenta
-}
+	Get-PSSession | Remove-PSSession
 }
 #=========================================================================================================================================================================
 # Cleaning sessions
@@ -131,6 +131,7 @@ function set-aitWebContent {
 function close-deploy {
 	write-host "Deployment Completed" -ForegroundColor Cyan
 	Get-PSSession | Remove-PSSession
+	exit
 }
 #=========================================================================================================================================================================
 
@@ -161,9 +162,8 @@ do {
 		  '3' {write-host 'You chose option #3' -ForegroundColor Cyan}
 		  'q' {
 			   #Cleaning sessions
-			   write-host "Closing sessions..." -ForegroundColor Cyan
-			   Get-PSSession | Remove-PSSession
-			   exit
+			   write-host "aborting..." -ForegroundColor Cyan
+			   close-deploy
 			  }
 	}
 }
